@@ -2,23 +2,26 @@
 
 All notable changes to FluxION will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project
+adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Added
+
 - Repository cleanup and documentation organization
 - Comprehensive CONTRIBUTING.md with development guidelines
 - CHANGELOG.md following Keep a Changelog format
 
 ### Changed
+
 - Improved documentation structure (organized into docs/ subdirectories)
 - Enhanced README.md with better Quick Start and Project Status sections
 - Replaced TODO comments with descriptive "Future:" comments
 - Improved documentation for future-use configuration methods
 
 ### Removed
+
 - Dead code cleanup: removed ~801 lines of unused functions
 - Obsolete configuration files and test data
 - Outdated inventory files
@@ -27,14 +30,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### MVP Release - Production Ready
 
-FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for production use with Home Assistant integration.
+FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for production use with
+Home Assistant integration.
 
 ### Added
 
 #### Core Features
+
 - **ECS Architecture**: Built on Bevy Entity Component System for clean separation of data and logic
 - **Vendor-Agnostic Design**: Generic sensor abstraction layer supporting multiple inverter brands
-- **Home Assistant Integration**: Primary communication through HA API with existing vendor integrations
+- **Home Assistant Integration**: Primary communication through HA API with existing vendor
+  integrations
 - **Economic Optimization**: Multiple strategy system for intelligent charge/discharge scheduling
   - Time-aware charging (buy during cheapest hours)
   - Winter peak discharge strategy
@@ -44,12 +50,14 @@ FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for pr
 - **Mode Change Debouncing**: Prevents rapid mode switching and inverter EEPROM wear
 
 #### Internationalization
+
 - **Multi-language Support**: English (default) and Czech translations
 - **134+ Translation Keys**: Complete coverage of UI elements
 - **Fluent Framework**: Mozilla Fluent for professional i18n
 - **Embedded Translations**: No external files needed
 
 #### Web Interface
+
 - **Real-time Dashboard**: System status and metrics monitoring
 - **Interactive Charts**: Power flows visualization with Chart.js
 - **Schedule Visualization**: Visual timeline of planned battery operations
@@ -58,6 +66,7 @@ FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for pr
 - **Dark Mode**: (future enhancement planned)
 
 #### Monitoring & Observability
+
 - **30+ Sensor Types**: Comprehensive monitoring including:
   - Extended PV strings (PV1-4 individual powers)
   - Three-phase measurements (L1/L2/L3 voltage, current, power)
@@ -71,11 +80,13 @@ FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for pr
 - **Prometheus Metrics**: Ready for integration with monitoring tools
 
 #### Hardware Support
+
 - **Solax X3-Hybrid G4**: Full support via Home Assistant integration
 - **Modbus TCP**: Optional feature for direct inverter communication
 - **Multi-inverter Topology**: Master/slave configuration support
 
 #### Configuration
+
 - **Flexible Configuration**: Support for TOML, JSON, and HA addon options
 - **HA Addon Options**: Native Home Assistant addon configuration
 - **Battery Economics**: Configurable wear cost and efficiency parameters
@@ -85,12 +96,14 @@ FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for pr
 ### Changed
 
 #### Performance & Reliability
+
 - **Channel-Based Async**: Non-blocking async operations using crossbeam channels
 - **Tokio Runtime**: Efficient async I/O for HA communication
 - **15-Minute Blocks**: Aligned with most spot price granularity
 - **Graceful Error Handling**: Robust error recovery and logging
 
 #### Code Quality
+
 - **Zero Clippy Warnings**: Clean, idiomatic Rust code
 - **Comprehensive Tests**: 23 test modules covering core functionality
 - **Type Safety**: Strong typing throughout the codebase
@@ -107,6 +120,7 @@ FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for pr
 ### Technical Details
 
 #### Architecture
+
 - **Bevy ECS**: v0.15.0-rc.2
 - **Axum Web Framework**: v0.8
 - **Tokio Runtime**: Async runtime for I/O operations
@@ -114,11 +128,13 @@ FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for pr
 - **Fluent i18n**: Mozilla Fluent for translations
 
 #### Deployment Options
+
 - **Home Assistant Addon**: Native integration (planned)
 - **Docker**: Containerized deployment (planned)
 - **Standalone Binary**: Direct execution on Linux systems
 
 #### License
+
 - **AGPL v3.0**: GNU Affero General Public License
 - **Commercial Licensing**: Available via info@solare.cz
 
@@ -150,7 +166,7 @@ FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for pr
 - Basic Modbus communication
 - Proof of concept scheduler
 
----
+______________________________________________________________________
 
 ## Version History Summary
 
@@ -169,6 +185,7 @@ FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for pr
 ## Future Roadmap
 
 ### Planned for v0.2.0
+
 - [ ] Additional inverter brand support (Fronius, SMA, Huawei)
 - [ ] Solar forecast integration (Solcast/Forecast.Solar)
 - [ ] Consumption forecast integration
@@ -176,18 +193,20 @@ FluxION v0.1.0 represents the Minimum Viable Product (MVP) release, ready for pr
 - [ ] Improved work mode detection and mapping
 
 ### Planned for v0.3.0
+
 - [ ] Advanced forecasting with machine learning
 - [ ] Multi-battery support
 - [ ] Dynamic pricing strategy optimization
 - [ ] Mobile-responsive Web UI enhancements
 
 ### Long-term Vision
+
 - Grid services participation (demand response)
 - Vehicle-to-grid (V2G) integration
 - Community solar sharing features
 - Advanced analytics and reporting
 
----
+______________________________________________________________________
 
 For commercial licensing or support inquiries: info@solare.cz
 
