@@ -1,0 +1,45 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+
+# Sensitive files
+.token.txt
+*.token
+
+# Config files (may contain secrets)
+config.toml
+config.json
+!config.example.toml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+*.profraw
+*.profdata
+
+# Build artifacts
+/dist/
+/build/
+
+# Data exports and logs
+/data/*.json
+/data/*.log
+!/data/.gitkeep
+
+# Old/backup files
+*.old
+*.bak
+*.backup
+
+# Nix build result
+/result

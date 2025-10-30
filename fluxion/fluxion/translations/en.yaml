@@ -1,0 +1,78 @@
+---
+configuration:
+  debug_mode:
+    name: Debug Mode
+    description: >-
+      Enable debug mode to test FluxION without actually controlling your
+      inverters. Recommended for initial setup and testing.
+  log_level:
+    name: Log Level
+    description: The amount of logging the add-on should produce.
+  inverters:
+    name: Inverters
+    description: Configure your solar inverters.
+  id:
+    name: Inverter ID
+    description: Unique identifier for this inverter.
+  vendor:
+    name: Vendor
+    description: The manufacturer of your inverter (solax, fronius, sma).
+  entity_prefix:
+    name: Entity Prefix
+    description: >-
+      The prefix used for Home Assistant entities related to this inverter.
+  topology:
+    name: Topology
+    description: >-
+      Inverter role in multi-inverter setups (independent, master, slave).
+  min_battery_soc:
+    name: Minimum Battery SOC
+    description: >-
+      Minimum battery state of charge (%) that FluxION will maintain.
+  max_battery_soc:
+    name: Maximum Battery SOC
+    description: Maximum battery state of charge (%) that FluxION will charge to.
+  pricing:
+    name: Pricing
+    description: Configure electricity pricing information.
+  spot_price_entity:
+    name: Spot Price Entity
+    description: >-
+      The Home Assistant entity that provides current electricity spot prices.
+  use_spot_prices_to_buy:
+    name: Use Spot Prices for Buying
+    description: >-
+      Enable using spot prices to determine when to buy electricity from the
+      grid (charge batteries when prices are low).
+  use_spot_prices_to_sell:
+    name: Use Spot Prices for Selling
+    description: >-
+      Enable using spot prices to determine when to sell electricity to the
+      grid (discharge batteries when prices are high).
+  force_charge_hours:
+    name: Force Charge Hours
+    description: >-
+      Number of hours per day to force charge the battery during the lowest
+      price periods.
+  force_discharge_hours:
+    name: Force Discharge Hours
+    description: >-
+      Number of hours per day to force discharge the battery during the highest
+      price periods.
+  fixed_buy_prices:
+    name: Fixed Buy Prices
+    description: Optional list of fixed electricity buy prices if not using spot prices.
+  fixed_sell_prices:
+    name: Fixed Sell Prices
+    description: Optional list of fixed electricity sell prices if not using spot prices.
+  control:
+    name: Control Settings
+    description: Fine-tune FluxION's control behavior.
+  maximum_export_power_w:
+    name: Maximum Export Power (W)
+    description: Maximum power (in watts) that can be exported to the grid.
+  update_interval_secs:
+    name: Update Interval (seconds)
+    description: >-
+      How often (in seconds) FluxION checks conditions and updates control
+      decisions. Must be between 10 and 3600 seconds.

@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+env:
+  GHCR_REGISTRY: ghcr.io
+  GHCR_IMAGE: ghcr.io/solare-cz/fluxion
+
+jobs:
+  # ============= PR Validation Jobs (required for PRs) =============
+
+  fmt:
+    name: Format Check
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Check formatting and license headers
+        working-directory: fluxion
+        run: |
+          if ! nix fmt -- --fail-on-change; then
+            echo "❌ Code is not properly formatted or missing license headers!"
+            echo ""
+            echo "To fix this, run locally:"
+            echo "  cd fluxion"
+            echo "  nix fmt"
+            echo ""
+            echo "This will:"
+            echo "  - Add CC-BY-NC-ND-4.0 license headers to files missing them"
+            echo "  - Format Rust code with rustfmt"
+            echo "  - Format Nix, TOML, and other files"
+            echo ""
+            echo "Then commit the changes."
+            exit 1
+          fi
+          echo "✅ All files are properly formatted with correct license headers!"
+
+  clippy:
+    name: Clippy
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Run clippy
+        working-directory: fluxion
+        run: |
+          echo "Running clippy with -D warnings (no warnings allowed)..."
+          nix develop --command cargo clippy --workspace -- -D warnings
+
+  test:
+    name: Tests
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Run tests
+        working-directory: fluxion
+        run: |
+          echo "Running all workspace tests..."
+          nix develop --command cargo test --workspace --verbose
+
+  audit:
+    name: Security Audit
+    runs-on: [ubuntu-latest]
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Run security audit
+        working-directory: fluxion
+        run: |
+          echo "Running cargo audit..."
+          nix develop --command bash -c "cargo install cargo-audit && cargo audit"

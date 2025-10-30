@@ -1,0 +1,460 @@
+# GitLab CI/CD Pipeline for FluxION ECS
+# Energy Control System for PV plant automation - Rust implementation
+# Builds and tests the Rust workspace and Home Assistant addon
+# This pipeline is triggered from the parent pipeline in the repository root
+
+# Define template for Nix-based jobs
+# Using determinatesystems/nix-installer which is CI-friendly
+.nix_job:
+  image: ubuntu:latest
+  variables:
+    # Enable experimental features for flakes
+    NIX_CONFIG: "experimental-features = nix-command flakes"
+  before_script:
+    # Install Nix on first run (cached via apt cache)
+    - apt-get update && apt-get install -y curl xz-utils sudo git
+    - |
+      if ! command -v nix &> /dev/null; then
+        curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install linux --no-confirm --init none
+      fi
+    # Source Nix environment
+    - |
+      if [ -f /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]; then
+        . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+      elif [ -f ~/.nix-profile/etc/profile.d/nix.sh ]; then
+        . ~/.nix-profile/etc/profile.d/nix.sh
+      fi
+    - export PATH="/nix/var/nix/profiles/default/bin:$PATH"
+    - nix --version
+    - cd fluxion
+
+variables:
+  # Docker image names
+  ADDON_NAME: "fluxion"
+  DOCKER_DRIVER: overlay2
+  #CI_DEBUG_TRACE: true
+  
+  # GitHub Container Registry
+  GHCR_REGISTRY: ghcr.io
+  GHCR_IMAGE: ghcr.io/solare-cz/fluxion
+
+  # Rust build configuration (paths relative to fluxion directory)
+  CARGO_HOME: $CI_PROJECT_DIR/fluxion/fluxion/.cargo
+  CARGO_TARGET_DIR: $CI_PROJECT_DIR/fluxion/fluxion/target
+
+# Cache Rust dependencies between builds
+cache:
+  key: ${CI_COMMIT_REF_SLUG}-fluxion
+  paths:
+    - fluxion/.cargo/
+    - fluxion/target/
+
+stages:
+  - build
+  - test
+  - release
+  - publish
+
+# ============= Test Stage =============
+
+# Run unit tests
+# Note: Rust version is determined by rust-toolchain.toml in the workspace
+test:unit:
+  extends: .nix_job
+  stage: test
+  script:
+    - nix --version
+    - echo "Running unit tests..."
+    - nix develop --command cargo test --workspace --verbose
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - when: always
+
+# Check code quality with clippy
+# Note: Rust version and components are determined by rust-toolchain.toml
+test:clippy:
+  extends: .nix_job
+  stage: test
+  script:
+    - nix --version
+    - echo "Running clippy..."
+    - nix develop --command cargo clippy --workspace -- -D warnings
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - when: always
+
+# Check code formatting and license headers using nix fmt
+# Verifies that all files are formatted and have CC-BY-NC-ND-4.0 headers
+test:fmt:
+  extends: .nix_job
+  stage: test
+  script:
+    - nix --version
+    - echo "Checking code formatting and license headers..."
+    - |
+      res=$(nix fmt -- --fail-on-change)
+      if [ "$?" -ne 0 ]; then
+        echo "❌ Code is not properly formatted or missing license headers!"
+        echo ""
+        echo "To fix this, run locally:"
+        echo "  nix fmt"
+        echo ""
+        echo "This will:"
+        echo "  - Add CC-BY-NC-ND-4.0 license headers to files missing them"
+        echo "  - Format Rust code with rustfmt"
+        echo "  - Format Nix, TOML, and other files"
+        echo ""
+        echo "Then commit the changes."
+        exit 1
+      fi
+    - echo "✅ All files are properly formatted with correct license headers!"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - when: always
+
+# Security audit
+# Note: Rust version is determined by rust-toolchain.toml in the workspace
+test:audit:
+  extends: .nix_job
+  stage: test
+  script:
+    - nix --version
+    - echo "Running security audit..."
+    - nix develop --command bash -c "cargo install cargo-audit && cargo audit"
+  allow_failure: true
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - when: always
+
+# ============= Build Stage =============
+
+# Build addon for amd64 using Nix
+build:amd64:
+  extends: .nix_job
+  stage: build
+  needs: []
+  script:
+    - echo "Building amd64 Home Assistant addon with Nix..."
+    - nix build .#dockerImage-amd64 -L 2>&1 | grep -E '(error|warning|Building|Finished)' || true
+    - echo "Image built successfully"
+    - |
+      # Extract the gzipped tarball (Nix produces .tar.gz, crane needs .tar)
+      gunzip -c result > /tmp/fluxion-amd64.tar
+    - echo "Uploading to registry..."
+    - |
+      # Use crane to push directly to registry without Docker daemon
+      nix shell nixpkgs#go-containerregistry --command crane auth login \
+        -u $CI_REGISTRY_USER \
+        -p $CI_REGISTRY_PASSWORD \
+        $CI_REGISTRY
+    - |
+      nix shell nixpkgs#go-containerregistry --command crane push \
+        /tmp/fluxion-amd64.tar \
+        $CI_REGISTRY_IMAGE/fluxion:$CI_COMMIT_SHORT_SHA-amd64
+    - |
+      nix shell nixpkgs#go-containerregistry --command crane push \
+        /tmp/fluxion-amd64.tar \
+        $CI_REGISTRY_IMAGE/fluxion:latest-amd64
+    - echo "Pushing to GitHub Container Registry..."
+    - |
+      # Login to GitHub Container Registry
+      nix shell nixpkgs#go-containerregistry --command crane auth login \
+        -u $GITHUB_USER \
+        -p $GITHUB_TOKEN \
+        $GHCR_REGISTRY
+    - |
+      nix shell nixpkgs#go-containerregistry --command crane push \
+        /tmp/fluxion-amd64.tar \
+        $GHCR_IMAGE:$CI_COMMIT_SHORT_SHA-amd64
+    - |
+      nix shell nixpkgs#go-containerregistry --command crane push \
+        /tmp/fluxion-amd64.tar \
+        $GHCR_IMAGE:latest-amd64
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - when: manual
+      allow_failure: true
+
+# Build addon for aarch64 (ARM64) using Nix cross-compilation - for Raspberry Pi 4
+build:aarch64:
+  extends: .nix_job
+  stage: build
+  needs: []
+  script:
+    - echo "Building aarch64 Home Assistant addon with Nix cross-compilation..."
+    - nix build .#dockerImage-aarch64 -L 2>&1 | grep -E '(error|warning|Building|Finished)' || true
+    - echo "Image built successfully"
+    - |
+      # Extract the gzipped tarball (Nix produces .tar.gz, crane needs .tar)
+      gunzip -c result > /tmp/fluxion-aarch64.tar
+    - echo "Uploading to registry..."
+    - |
+      # Use crane to push directly to registry without Docker daemon
+      nix shell nixpkgs#go-containerregistry --command crane auth login \
+        -u $CI_REGISTRY_USER \
+        -p $CI_REGISTRY_PASSWORD \
+        $CI_REGISTRY
+    - |
+      nix shell nixpkgs#go-containerregistry --command crane push \
+        /tmp/fluxion-aarch64.tar \
+        $CI_REGISTRY_IMAGE/fluxion:$CI_COMMIT_SHORT_SHA-aarch64
+    - |
+      nix shell nixpkgs#go-containerregistry --command crane push \
+        /tmp/fluxion-aarch64.tar \
+        $CI_REGISTRY_IMAGE/fluxion:latest-aarch64
+    - echo "Pushing to GitHub Container Registry..."
+    - |
+      # Login to GitHub Container Registry
+      nix shell nixpkgs#go-containerregistry --command crane auth login \
+        -u $GITHUB_USER \
+        -p $GITHUB_TOKEN \
+        $GHCR_REGISTRY
+    - |
+      nix shell nixpkgs#go-containerregistry --command crane push \
+        /tmp/fluxion-aarch64.tar \
+        $GHCR_IMAGE:$CI_COMMIT_SHORT_SHA-aarch64
+    - |
+      nix shell nixpkgs#go-containerregistry --command crane push \
+        /tmp/fluxion-aarch64.tar \
+        $GHCR_IMAGE:latest-aarch64
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - when: manual
+      allow_failure: true
+
+# Build addon for armv7 (ARM 32-bit) - Currently disabled, requires additional Nix setup
+# Uncomment when armv7 cross-compilation is properly configured in flake.nix
+# build:armv7:
+#   extends: .nix_job
+#   stage: build
+#   needs: []
+#   script:
+#     - echo "Building armv7 Home Assistant addon with Nix cross-compilation..."
+#     - nix build .#dockerImage-armv7 --print-build-logs
+#     - echo "Loading image into Docker..."
+#     - nix-shell -p docker --run "docker load < result"
+#     - echo "Tagging and pushing image..."
+#     - nix-shell -p docker --run "
+#         docker tag fluxion-ha:armv7 $CI_REGISTRY_IMAGE/fluxion:$CI_COMMIT_SHORT_SHA-armv7 &&
+#         docker tag fluxion-ha:armv7 $CI_REGISTRY_IMAGE/fluxion:latest-armv7 &&
+#         docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY &&
+#         docker push $CI_REGISTRY_IMAGE/fluxion:$CI_COMMIT_SHORT_SHA-armv7 &&
+#         docker push $CI_REGISTRY_IMAGE/fluxion:latest-armv7
+#       "
+#   rules:
+#     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+#     - if: $CI_COMMIT_TAG
+#     - when: manual
+#       allow_failure: true
+
+# ============= Release Stage =============
+
+# Create multi-arch manifest and push to registry
+release:manifest:
+  extends: .nix_job
+  stage: release
+  script:
+    - echo "Creating multi-arch manifest for tag $CI_COMMIT_TAG..."
+    # Note: Only including amd64 and aarch64 since armv7 is currently disabled
+    - |
+      # Use crane to create and push multi-arch index
+      nix shell nixpkgs#go-containerregistry --command crane auth login \
+        -u $CI_REGISTRY_USER \
+        -p $CI_REGISTRY_PASSWORD \
+        $CI_REGISTRY
+    - |
+      # Create index for tagged version
+      nix shell nixpkgs#go-containerregistry --command crane index append \
+        -m $CI_REGISTRY_IMAGE/fluxion:$CI_COMMIT_TAG \
+        -t $CI_REGISTRY_IMAGE/fluxion:$CI_COMMIT_SHORT_SHA-amd64 \
+        -t $CI_REGISTRY_IMAGE/fluxion:$CI_COMMIT_SHORT_SHA-aarch64
+    - |
+      # Create index for latest
+      nix shell nixpkgs#go-containerregistry --command crane index append \
+        -m $CI_REGISTRY_IMAGE/fluxion:latest \
+        -t $CI_REGISTRY_IMAGE/fluxion:latest-amd64 \
+        -t $CI_REGISTRY_IMAGE/fluxion:latest-aarch64
+    - echo "Multi-arch manifests created and pushed"
+    - echo "Creating multi-arch manifests for GitHub Container Registry..."
+    - |
+      # Login to GitHub Container Registry
+      nix shell nixpkgs#go-containerregistry --command crane auth login \
+        -u $GITHUB_USER \
+        -p $GITHUB_TOKEN \
+        $GHCR_REGISTRY
+    - |
+      # Create index for tagged version on GitHub
+      nix shell nixpkgs#go-containerregistry --command crane index append \
+        -m $GHCR_IMAGE:$CI_COMMIT_TAG \
+        -t $GHCR_IMAGE:$CI_COMMIT_SHORT_SHA-amd64 \
+        -t $GHCR_IMAGE:$CI_COMMIT_SHORT_SHA-aarch64
+    - |
+      # Create index for latest on GitHub
+      nix shell nixpkgs#go-containerregistry --command crane index append \
+        -m $GHCR_IMAGE:latest \
+        -t $GHCR_IMAGE:latest-amd64 \
+        -t $GHCR_IMAGE:latest-aarch64
+    - echo "GitHub Container Registry multi-arch manifests created and pushed"
+  rules:
+    - if: $CI_COMMIT_TAG
+
+# Create GitLab Release with container registry links
+release:gitlab:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - build:amd64
+    - build:aarch64
+  script:
+    - echo "Creating GitLab Release for $CI_COMMIT_TAG"
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: 'FluxION ECS $CI_COMMIT_TAG'
+    description: |
+      # FluxION ECS ${CI_COMMIT_TAG}
+      
+      Energy Control System for PV plant automation - Rust-based Home Assistant addon
+      
+      ## Features
+      
+      - 🔋 Battery control based on electricity spot prices
+      - 🌞 Multi-inverter support (Solax, Fronius, SMA)
+      - ⏰ 15-minute time block scheduling
+      - 🏠 Native Home Assistant integration
+      - 🐛 Debug mode for safe testing
+      - 🔧 Multi-architecture support (amd64, aarch64/RPi4)
+      
+      ## Installation
+      
+      ### Docker Images (GitLab Container Registry)
+      
+      Pull the image for your architecture:
+      
+      ```bash
+      # For Raspberry Pi 4 (aarch64)
+      docker pull ${CI_REGISTRY_IMAGE}/fluxion:${CI_COMMIT_TAG}-aarch64
+      
+      # For x86_64 systems
+      docker pull ${CI_REGISTRY_IMAGE}/fluxion:${CI_COMMIT_TAG}-amd64
+      
+      # Multi-arch (auto-selects correct architecture)
+      docker pull ${CI_REGISTRY_IMAGE}/fluxion:${CI_COMMIT_TAG}
+      ```
+      
+      ### Home Assistant Add-on
+      
+      1. Add this repository to Home Assistant:
+         - Settings → Add-ons → Add-on Store → ⋮ → Repositories
+         - Add URL: `${CI_PROJECT_URL}`
+      
+      2. Install "FluxION ECS" add-on
+      
+      3. Configure with your inverter and pricing settings
+      
+      4. Start the add-on
+      
+      ## Quick Start on Raspberry Pi 4
+      
+      ```bash
+      # Pull the image
+      docker pull ${CI_REGISTRY_IMAGE}/fluxion:${CI_COMMIT_TAG}-aarch64
+      
+      # Run with Home Assistant
+      docker run -d \
+        --name fluxion \
+        -e HA_BASE_URL="http://homeassistant.local:8123" \
+        -e HA_TOKEN="your-long-lived-token" \
+        -v /path/to/config:/data \
+        ${CI_REGISTRY_IMAGE}/fluxion:${CI_COMMIT_TAG}-aarch64
+      ```
+      
+      ## Documentation
+      
+      - [README](${CI_PROJECT_URL}/-/blob/${CI_COMMIT_TAG}/fluxion/README.md)
+      - [Architecture](${CI_PROJECT_URL}/-/blob/${CI_COMMIT_TAG}/fluxion/ARCHITECTURE.md)
+      - [Configuration Guide](${CI_PROJECT_URL}/-/blob/${CI_COMMIT_TAG}/fluxion/config.yaml)
+    assets:
+      links:
+        - name: 'aarch64 Docker Image (Raspberry Pi 4)'
+          url: '${CI_PROJECT_URL}/container_registry'
+          link_type: image
+        - name: 'amd64 Docker Image'
+          url: '${CI_PROJECT_URL}/container_registry'
+          link_type: image
+        - name: 'Documentation'
+          url: '${CI_PROJECT_URL}/-/blob/${CI_COMMIT_TAG}/fluxion/README.md'
+          link_type: other
+  rules:
+    - if: $CI_COMMIT_TAG
+
+# ============= Publish Stage =============
+
+# Manual job to bump version and publish to GitHub
+# This job:
+# 1. Bumps the version (major/minor/patch)
+# 2. Commits version changes to GitLab
+# 3. Publishes a squashed release to GitHub
+# 4. Creates GitHub release with tag
+publish:github:
+  image: ubuntu:latest
+  stage: publish
+  needs: []
+  before_script:
+    - apt-get update && apt-get install -y git rsync openssh-client
+    - git config --global user.name "FluxION Release Bot"
+    - git config --global user.email "releases@solare.cz"
+  script:
+    - cd fluxion
+    - echo "Current version$(cat version)"
+    - echo "Bump type ${BUMP_TYPE}"
+    - echo "Making scripts executable"
+    - chmod +x scripts/bump_version.sh scripts/publish_to_github.sh
+    - echo "Bumping version"
+    - bash scripts/bump_version.sh "${BUMP_TYPE}"
+    - NEW_VERSION=$(cat version)
+    - echo "New version $NEW_VERSION"
+    - echo "Committing version bump to GitLab"
+    - git remote set-url origin "https://oauth2:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+    - git add version fluxion/config.yaml
+    - git commit -m "Bump version to $NEW_VERSION"
+    - git push origin HEAD:${CI_COMMIT_REF_NAME}
+    - echo "Publishing to GitHub"
+    - bash scripts/publish_to_github.sh
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  variables:
+    # Set this when triggering the job: major, minor, or patch
+    BUMP_TYPE: "patch"
+
+# ============= Optional: Development Builds =============
+
+# Quick dev build (amd64 only, no push)
+# Note: Rust version is determined by rust-toolchain.toml in the workspace
+dev:build:
+  extends: .nix_job
+  stage: build
+  needs: []
+  script:
+    - nix --version
+    - echo "Development build..."
+    - nix develop --command cargo build --workspace --verbose
+    - nix develop --command cargo build --workspace --release --verbose
+  artifacts:
+    paths:
+      - fluxion/target/release/fluxion-main
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: true
