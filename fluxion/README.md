@@ -3,7 +3,8 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)
 
-A Rust-based solar plant automation system using Bevy ECS framework. Supports Home Assistant integration for vendor-agnostic inverter control and comprehensive sensor monitoring.
+A Rust-based solar plant automation system using Bevy ECS framework. Supports Home Assistant
+integration for vendor-agnostic inverter control and comprehensive sensor monitoring.
 
 **Status:** ✅ MVP Complete - Production ready for Home Assistant integration
 
@@ -57,6 +58,7 @@ See [docs/guides/I18N.md](docs/guides/I18N.md) for detailed documentation on:
 ## Quick Start
 
 ### Prerequisites
+
 - Rust 1.75 or later
 - Home Assistant instance with inverter integration
 - (Optional) Direct Modbus TCP access to inverter
@@ -88,22 +90,26 @@ See [docs/guides/CONFIGURATION.md](docs/guides/CONFIGURATION.md) for detailed co
 cargo run --release
 ```
 
-For deployment options (Docker, Home Assistant addon), see [docs/guides/DEPLOYMENT.md](docs/guides/DEPLOYMENT.md).
+For deployment options (Docker, Home Assistant addon), see
+[docs/guides/DEPLOYMENT.md](docs/guides/DEPLOYMENT.md).
 
 ## Documentation
 
 📚 **[Complete Documentation →](docs/README.md)**
 
 ### Quick Links
+
 - **[Configuration Guide](docs/guides/CONFIGURATION.md)** - How to configure FluxION
 - **[Deployment Guide](docs/guides/DEPLOYMENT.md)** - Docker, Home Assistant addon
-- **[Architecture Overview](docs/architecture/ARCHITECTURE.md)** - System design and ECS architecture
+- **[Architecture Overview](docs/architecture/ARCHITECTURE.md)** - System design and ECS
+  architecture
 - **[Testing Guide](docs/guides/TESTING.md)** - Running tests
 - **[Internationalization](docs/guides/I18N.md)** - Adding translations
 
 ## Architecture Overview
 
-FluxION uses the **Bevy ECS (Entity Component System)** framework for clean separation of data and logic.
+FluxION uses the **Bevy ECS (Entity Component System)** framework for clean separation of data and
+logic.
 
 ### Vendor-Agnostic Design
 
@@ -120,11 +126,13 @@ Solax/Other Inverter → GenericInverterState → FluxION business logic
 - **Data Sources**: Abstract interfaces for reading/writing inverter data
 - **Adapters**: Concrete implementations (HomeAssistant, Modbus)
 
-For detailed architecture information, see [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md).
+For detailed architecture information, see
+[docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md).
 
 ### Key Features
 
-- **30+ Sensor Types**: Comprehensive monitoring including PV strings, three-phase power, battery metrics, temperatures
+- **30+ Sensor Types**: Comprehensive monitoring including PV strings, three-phase power, battery
+  metrics, temperatures
 - **Economic Optimization**: Multiple strategy system for intelligent charge/discharge scheduling
 - **Seasonal Adaptation**: Different optimization strategies for summer vs winter
 - **Web UI**: Real-time monitoring dashboard with charts and controls
@@ -144,9 +152,11 @@ FluxION includes a built-in web UI accessible at `http://localhost:3000` (config
 ## Supported Inverters
 
 Currently tested with:
+
 - **Solax X3-Hybrid G4** (via Home Assistant integration or Modbus)
 
-The vendor-agnostic architecture makes it easy to add support for other brands. See [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for implementation details.
+The vendor-agnostic architecture makes it easy to add support for other brands. See
+[docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for implementation details.
 
 ## Troubleshooting
 
@@ -163,6 +173,7 @@ For detailed troubleshooting, see [docs/guides/DEPLOYMENT.md](docs/guides/DEPLOY
 **Current Version:** MVP Complete (v0.1.0)
 
 **Status:**
+
 - ✅ Core ECS architecture implemented
 - ✅ Home Assistant integration working
 - ✅ Economic optimization strategies (8 strategies)
@@ -186,7 +197,9 @@ Contributions are welcome! Please:
 
 **GNU Affero General Public License v3.0 (AGPL-3.0)**
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU
+Affero General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
 
 For commercial licensing inquiries, contact: info@solare.cz
 

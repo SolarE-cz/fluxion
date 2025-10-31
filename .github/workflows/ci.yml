@@ -1,0 +1,377 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+env:
+  GHCR_REGISTRY: ghcr.io
+  GHCR_IMAGE: ghcr.io/solare-cz/fluxion
+
+jobs:
+  # ============= PR Validation Jobs (required for PRs) =============
+
+  fmt:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Check formatting and license headers
+        working-directory: fluxion
+        run: |
+          if ! nix fmt -- --fail-on-change; then
+            echo "❌ Code is not properly formatted or missing license headers!"
+            echo ""
+            echo "To fix this, run locally:"
+            echo "  cd fluxion"
+            echo "  nix fmt"
+            echo ""
+            echo "This will:"
+            echo "  - Add CC-BY-NC-ND-4.0 license headers to files missing them"
+            echo "  - Format Rust code with rustfmt"
+            echo "  - Format Nix, TOML, and other files"
+            echo ""
+            echo "Then commit the changes."
+            exit 1
+          fi
+          echo "✅ All files are properly formatted with correct license headers!"
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Run clippy
+        working-directory: fluxion
+        run: |
+          echo "Running clippy with -D warnings (no warnings allowed)..."
+          nix develop --command cargo clippy --workspace -- -D warnings
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Run tests
+        working-directory: fluxion
+        run: |
+          echo "Running all workspace tests..."
+          nix develop --command cargo test --workspace --verbose
+
+  audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Run security audit
+        working-directory: fluxion
+        run: |
+          echo "Running cargo audit..."
+          nix develop --command bash -c "cargo install cargo-audit && cargo audit"
+
+  # ============= Build Jobs (run on main and tags) =============
+
+  build-amd64:
+    name: Build AMD64 Image
+    runs-on: ubuntu-latest
+    # Build on main, tags, and PRs
+    needs: [fmt, clippy, test]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Build AMD64 Docker image
+        working-directory: fluxion
+        run: |
+          echo "Building AMD64 Home Assistant addon with Nix..."
+          nix build .#dockerImage-amd64 -L
+          echo "Image built successfully"
+          gunzip -c result > /tmp/fluxion-amd64.tar
+
+      - name: Install crane
+        run: |
+          nix profile install nixpkgs#go-containerregistry
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push to GHCR
+        # Only push on main or tags, not on PRs
+        if: github.event_name != 'pull_request'
+        run: |
+          # Determine tags based on ref
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${{ github.ref_name }}"
+            crane push /tmp/fluxion-amd64.tar ${{ env.GHCR_IMAGE }}:${TAG}-amd64
+          fi
+
+          # Always push commit SHA and latest for main branch
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+            crane push /tmp/fluxion-amd64.tar ${{ env.GHCR_IMAGE }}:${SHORT_SHA}-amd64
+            crane push /tmp/fluxion-amd64.tar ${{ env.GHCR_IMAGE }}:latest-amd64
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fluxion-amd64
+          path: /tmp/fluxion-amd64.tar
+          retention-days: 7
+
+  build-aarch64:
+    name: Build ARM64 Image
+    runs-on: ubuntu-latest
+    # Build on main, tags, and PRs
+    needs: [fmt, clippy, test]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v2
+
+      - name: Build ARM64 Docker image
+        working-directory: fluxion
+        run: |
+          echo "Building ARM64 Home Assistant addon with Nix cross-compilation..."
+          nix build .#dockerImage-aarch64 -L
+          echo "Image built successfully"
+          gunzip -c result > /tmp/fluxion-aarch64.tar
+
+      - name: Install crane
+        run: |
+          nix profile install nixpkgs#go-containerregistry
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push to GHCR
+        # Only push on main or tags, not on PRs
+        if: github.event_name != 'pull_request'
+        run: |
+          # Determine tags based on ref
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${{ github.ref_name }}"
+            crane push /tmp/fluxion-aarch64.tar ${{ env.GHCR_IMAGE }}:${TAG}-aarch64
+          fi
+
+          # Always push commit SHA and latest for main branch
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+            crane push /tmp/fluxion-aarch64.tar ${{ env.GHCR_IMAGE }}:${SHORT_SHA}-aarch64
+            crane push /tmp/fluxion-aarch64.tar ${{ env.GHCR_IMAGE }}:latest-aarch64
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fluxion-aarch64
+          path: /tmp/fluxion-aarch64.tar
+          retention-days: 7
+
+  # ============= Release Jobs (tags only) =============
+
+  create-manifest:
+    name: Create Multi-arch Manifest
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-amd64, build-aarch64]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Install crane
+        run: |
+          nix profile install nixpkgs#go-containerregistry
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Create and push multi-arch manifest
+        run: |
+          TAG="${{ github.ref_name }}"
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+
+          echo "Creating multi-arch manifest for tag ${TAG}..."
+
+          # Create index for tagged version
+          crane index append \
+            -m ${{ env.GHCR_IMAGE }}:${TAG} \
+            -t ${{ env.GHCR_IMAGE }}:${SHORT_SHA}-amd64 \
+            -t ${{ env.GHCR_IMAGE }}:${SHORT_SHA}-aarch64
+
+          # Create index for latest
+          crane index append \
+            -m ${{ env.GHCR_IMAGE }}:latest \
+            -t ${{ env.GHCR_IMAGE }}:latest-amd64 \
+            -t ${{ env.GHCR_IMAGE }}:latest-aarch64
+
+          echo "✅ Multi-arch manifests created and pushed"
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [create-manifest]
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: FluxION ECS ${{ github.ref_name }}
+          body: |
+            # FluxION ECS ${{ github.ref_name }}
+
+            Energy Control System for PV plant automation - Rust-based Home Assistant addon
+
+            ## Features
+
+            - 🔋 Battery control based on electricity spot prices
+            - 🌞 Multi-inverter support (Solax, Fronius, SMA)
+            - ⏰ 15-minute time block scheduling
+            - 🏠 Native Home Assistant integration
+            - 🐛 Debug mode for safe testing
+            - 🔧 Multi-architecture support (amd64, aarch64/RPi4)
+
+            ## Installation
+
+            ### Docker Images (GitHub Container Registry)
+
+            Pull the image for your architecture:
+
+            ```bash
+            # For Raspberry Pi 4 (aarch64)
+            docker pull ${{ env.GHCR_IMAGE }}:${{ github.ref_name }}-aarch64
+
+            # For x86_64 systems
+            docker pull ${{ env.GHCR_IMAGE }}:${{ github.ref_name }}-amd64
+
+            # Multi-arch (auto-selects correct architecture)
+            docker pull ${{ env.GHCR_IMAGE }}:${{ github.ref_name }}
+            ```
+
+            ### Home Assistant Add-on
+
+            1. Add this repository to Home Assistant:
+               - Settings → Add-ons → Add-on Store → ⋮ → Repositories
+               - Add URL: `${{ github.server_url }}/${{ github.repository }}`
+
+            2. Install "FluxION ECS" add-on
+
+            3. Configure with your inverter and pricing settings
+
+            4. Start the add-on
+
+            ## Quick Start on Raspberry Pi 4
+
+            ```bash
+            # Pull the image
+            docker pull ${{ env.GHCR_IMAGE }}:${{ github.ref_name }}-aarch64
+
+            # Run with Home Assistant
+            docker run -d \
+              --name fluxion \
+              -e HA_BASE_URL="http://homeassistant.local:8123" \
+              -e HA_TOKEN="your-long-lived-token" \
+              -v /path/to/config:/data \
+              ${{ env.GHCR_IMAGE }}:${{ github.ref_name }}-aarch64
+            ```
+
+            ## Documentation
+
+            - [README](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/README.md)
+            - [Architecture](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/fluxion/docs/architecture/ARCHITECTURE.md)
+            - [Configuration Guide](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/fluxion/docs/guides/CONFIGURATION.md)
+          files: |
+            artifacts/**/*.tar
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

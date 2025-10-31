@@ -1,6 +1,7 @@
 # Contributing to FluxION
 
-Thank you for your interest in contributing to FluxION! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to FluxION! This document provides guidelines and
+information for contributors.
 
 ## Table of Contents
 
@@ -15,7 +16,8 @@ Thank you for your interest in contributing to FluxION! This document provides g
 
 ## Code of Conduct
 
-Be respectful and constructive in all interactions. We're building an open-source community focused on solar energy optimization.
+Be respectful and constructive in all interactions. We're building an open-source community focused
+on solar energy optimization.
 
 ## Getting Started
 
@@ -101,11 +103,13 @@ cargo clippy --all-targets --all-features -- -D warnings
 ```
 
 3. **Naming conventions:**
+
    - Use `snake_case` for functions, variables, modules
    - Use `PascalCase` for types, structs, enums
    - Use `SCREAMING_SNAKE_CASE` for constants
 
 4. **Documentation:**
+
    - Add doc comments (`///`) for public functions
    - Include examples in doc comments where helpful
    - Document panic conditions and safety requirements
@@ -115,16 +119,19 @@ cargo clippy --all-targets --all-features -- -D warnings
 FluxION uses the Bevy ECS framework. Follow these principles:
 
 1. **Separation of Concerns:**
+
    - **Components** = Data only (no behavior)
    - **Systems** = Logic only (operate on components)
    - **Resources** = Global shared state
 
 2. **Component Design:**
+
    - Keep components small and focused
    - Use `Option<T>` for optional data
    - Avoid nesting components
 
 3. **System Design:**
+
    - Systems should be pure functions where possible
    - Use queries to access component data
    - Communicate between systems via components or events
@@ -248,6 +255,7 @@ git checkout -b feature/your-feature-name
 ```
 
 2. **Make your changes:**
+
    - Write clear, focused commits
    - Follow commit message conventions (see below)
 
@@ -275,6 +283,7 @@ Fixes #123
 ```
 
 **Types:**
+
 - `feat:` - New feature
 - `fix:` - Bug fix
 - `docs:` - Documentation changes
@@ -352,10 +361,11 @@ See `crates/fluxion-solax/` as reference implementation.
 
 ## License
 
-By contributing to FluxION, you agree that your contributions will be licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+By contributing to FluxION, you agree that your contributions will be licensed under the GNU Affero
+General Public License v3.0 (AGPL-3.0).
 
 For commercial licensing inquiries, contact: info@solare.cz
 
----
+______________________________________________________________________
 
 Thank you for contributing to FluxION! 🌞⚡

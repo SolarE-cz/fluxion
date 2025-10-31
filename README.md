@@ -84,7 +84,8 @@ cargo run -p fluxion-main --release --bin fluxion
 
 ## Quick start (Docker)
 
-See `fluxion/docs/guides/NIX_DOCKER_BUILDS.md` for Docker build instructions using Nix, or use the standard Dockerfile in `fluxion/Dockerfile`.
+See `fluxion/docs/guides/NIX_DOCKER_BUILDS.md` for Docker build instructions using Nix, or use the
+standard Dockerfile in `fluxion/Dockerfile`.
 
 ## Configuration
 
@@ -219,7 +220,8 @@ cargo run -p fluxion-main --bin fluxion
 cargo test -p fluxion-core
 ```
 
-Rust toolchain details are specified in `fluxion/rust-toolchain.toml`. Nix integration is described in `flake.nix` and `fluxion/flake.nix`.
+Rust toolchain details are specified in `fluxion/rust-toolchain.toml`. Nix integration is described
+in `flake.nix` and `fluxion/flake.nix`.
 
 ## License
 
