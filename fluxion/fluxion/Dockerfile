@@ -31,7 +31,7 @@ RUN apk add --no-cache \
     libgcc=14.2.0-r4
 
 # Copy root filesystem
-COPY rootfs /
+COPY fluxion/rootfs /
 
 # Copy binary from builder
 COPY --from=builder /build/target/release/fluxion-main /usr/local/bin/fluxion-main
