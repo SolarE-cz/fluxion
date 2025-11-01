@@ -11,7 +11,9 @@ RUN apk add --no-cache \
     rust \
     git \
     openssl-dev \
-    musl-dev
+    musl-dev \
+    pkgconfig \
+    build-base
 
 # Set working directory
 WORKDIR /build
