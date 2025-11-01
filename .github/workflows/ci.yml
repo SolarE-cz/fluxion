@@ -19,7 +19,7 @@ jobs:
 
   fmt:
     name: Format Check
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +54,7 @@ jobs:
 
   clippy:
     name: Clippy
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -75,7 +75,7 @@ jobs:
 
   test:
     name: Tests
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v4
 
@@ -96,7 +96,7 @@ jobs:
 
   audit:
     name: Security Audit
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -120,7 +120,7 @@ jobs:
 
   build-amd64:
     name: Build AMD64 Image
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     # Build on main, tags, and PRs
     needs: [fmt, clippy, test]
     permissions:
@@ -193,7 +193,7 @@ jobs:
 
   build-aarch64:
     name: Build ARM64 Image
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     # Build on main, tags, and PRs
     needs: [fmt, clippy, test]
     permissions:
@@ -268,7 +268,7 @@ jobs:
 
   create-manifest-pr:
     name: Create PR Preview Multi-arch Manifest
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     if: github.event_name == 'pull_request'
     needs: [build-amd64, build-aarch64]
     permissions:
@@ -370,7 +370,7 @@ jobs:
 
   create-manifest-latest:
     name: Create Latest Multi-arch Manifest
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: [build-amd64, build-aarch64]
     permissions:
@@ -407,7 +407,7 @@ jobs:
 
   create-manifest-release:
     name: Create Release Multi-arch Manifest
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build-amd64, build-aarch64]
     permissions:
@@ -454,7 +454,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    runs-on: [self-hosted, ubuntu-latest]
+    runs-on: [ubuntu-latest]
     if: startsWith(github.ref, 'refs/tags/')
     needs: [create-manifest-release]
     permissions:

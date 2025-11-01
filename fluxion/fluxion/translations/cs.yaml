@@ -1,0 +1,78 @@
+---
+configuration:
+  debug_mode:
+    name: Testovací režim
+    description: >-
+      Zapněte testovací režim pro vyzkoušení FluxION bez skutečného ovládání
+      střídačů. Doporučeno pro počáteční nastavení a testování.
+  log_level:
+    name: Úroveň logování
+    description: Množství informací, které bude add-on zaznamenávat.
+  inverters:
+    name: Střídače
+    description: Konfigurace vašich solárních střídačů.
+  id:
+    name: ID střídače
+    description: Jedinečný identifikátor tohoto střídače.
+  vendor:
+    name: Výrobce
+    description: Výrobce vašeho střídače (solax, fronius, sma).
+  entity_prefix:
+    name: Prefix entity
+    description: >-
+      Prefix používaný pro Home Assistant entity související s tímto střídačem.
+  topology:
+    name: Topologie
+    description: >-
+      Role střídače při zapojení více střídačů (independent, master, slave).
+  min_battery_soc:
+    name: Minimální SOC baterie
+    description: >-
+      Minimální stav nabití baterie (%), který bude FluxION udržovat.
+  max_battery_soc:
+    name: Maximální SOC baterie
+    description: Maximální stav nabití baterie (%), na který bude FluxION dobíjet.
+  pricing:
+    name: Cenotvorba
+    description: Konfigurace informací o cenách elektřiny.
+  spot_price_entity:
+    name: Entita spotové ceny
+    description: >-
+      Home Assistant entita poskytující aktuální spotové ceny elektřiny.
+  use_spot_to_buy:
+    name: Použít spotové ceny pro nákup
+    description: >-
+      Povolit použití spotových cen k určení, kdy nakupovat elektřinu ze sítě
+      (dobíjet baterie při nízkých cenách).
+  use_spot_to_sell:
+    name: Použít spotové ceny pro prodej
+    description: >-
+      Povolit použití spotových cen k určení, kdy prodávat elektřinu do sítě
+      (vybíjet baterie při vysokých cenách).
+  force_charge_hours:
+    name: Hodiny vynuceného dobíjení
+    description: >-
+      Počet hodin denně pro vynucené dobíjení baterie během nejnižších cenových
+      období.
+  force_discharge_hours:
+    name: Hodiny vynuceného vybíjení
+    description: >-
+      Počet hodin denně pro vynucené vybíjení baterie během nejvyšších cenových
+      období.
+  fixed_buy_prices:
+    name: Fixní ceny nákupu
+    description: Volitelný seznam fixních cen nákupu elektřiny při nepoužívání spotových cen.
+  fixed_sell_prices:
+    name: Fixní ceny prodeje
+    description: Volitelný seznam fixních cen prodeje elektřiny při nepoužívání spotových cen.
+  control:
+    name: Nastavení řízení
+    description: Jemné doladění chování řízení FluxION.
+  max_export_power_w:
+    name: Maximální výkon exportu (W)
+    description: Maximální výkon (ve wattech), který může být exportován do sítě.
+  update_interval_secs:
+    name: Interval aktualizace (sekundy)
+    description: >-
+      Jak často (v sekundách) FluxION kontroluje podmínky a aktualizuje
+      rozhodnutí o řízení. Musí být mezi 10 a 3600 sekundami.

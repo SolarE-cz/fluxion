@@ -1,0 +1,66 @@
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:18.2.1
+# hadolint ignore=DL3006
+FROM ${BUILD_FROM} as builder
+
+# Set shell
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+# Install build dependencies
+RUN apk add --no-cache \
+    cargo=1.85.0-r0 \
+    rust=1.85.0-r0 \
+    git=2.47.1-r0 \
+    openssl-dev=3.4.0-r3 \
+    musl-dev=1.2.5-r2
+
+# Set working directory
+WORKDIR /build
+
+# Copy workspace configuration
+COPY Cargo.toml ./
+COPY crates/ ./crates/
+
+# Build release binary
+RUN cargo build --release --bin fluxion-main
+
+# Create final image
+FROM ${BUILD_FROM}
+
+# Install runtime dependencies
+RUN apk add --no-cache \
+    libgcc=14.2.0-r4
+
+# Copy root filesystem
+COPY rootfs /
+
+# Copy binary from builder
+COPY --from=builder /build/target/release/fluxion-main /usr/local/bin/fluxion-main
+
+# Build arguments
+ARG BUILD_ARCH
+ARG BUILD_DATE
+ARG BUILD_DESCRIPTION
+ARG BUILD_NAME
+ARG BUILD_REF
+ARG BUILD_REPOSITORY
+ARG BUILD_VERSION
+
+# Labels
+LABEL \
+    io.hass.name="${BUILD_NAME}" \
+    io.hass.description="${BUILD_DESCRIPTION}" \
+    io.hass.arch="${BUILD_ARCH}" \
+    io.hass.type="addon" \
+    io.hass.version=${BUILD_VERSION} \
+    maintainer="SolarE s.r.o." \
+    org.opencontainers.image.title="${BUILD_NAME}" \
+    org.opencontainers.image.description="${BUILD_DESCRIPTION}" \
+    org.opencontainers.image.vendor="FluxION ECS" \
+    org.opencontainers.image.authors="SolarE s.r.o." \
+    org.opencontainers.image.licenses="CC-BY-NC-ND-4.0" \
+    org.opencontainers.image.url="https://gitlab.com/SolarE-cz/fluxion" \
+    org.opencontainers.image.source="https://github.com/${BUILD_REPOSITORY}" \
+    org.opencontainers.image.documentation="https://github.com/${BUILD_REPOSITORY}/blob/main/README.md" \
+    org.opencontainers.image.created=${BUILD_DATE} \
+    org.opencontainers.image.revision=${BUILD_REF} \
+    org.opencontainers.image.version=${BUILD_VERSION}

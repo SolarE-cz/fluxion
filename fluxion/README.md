@@ -1,33 +1,31 @@
-# FluxION - Solar Plant Automation System
+# Home Assistant Add-on: FluxION ECS
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)
+[![GitHub Release][releases-shield]][releases] ![Project Stage][project-stage-shield]
+[![License][license-shield]](LICENSE)
 
-A Rust-based solar plant automation system using Bevy ECS framework. Supports Home Assistant
-integration for vendor-agnostic inverter control and comprehensive sensor monitoring.
+![Supports aarch64 Architecture][aarch64-shield] ![Supports amd64 Architecture][amd64-shield]
+![Supports armv7 Architecture][armv7-shield]
 
-**Status:** ✅ MVP Complete - Production ready for Home Assistant integration
+FluxION ECS - Intelligent solar energy control system for Home Assistant.
+
+## About
+
+FluxION ECS is a Rust-based solar plant automation system that optimizes your PV operations based on
+electricity spot prices and real-time conditions. Built with Bevy ECS framework, it provides
+efficient, reliable control of your solar installation through Home Assistant integration.
 
 ## Features
 
-- **ECS Architecture**: Built on Bevy's Entity Component System for clean separation of data and
-  logic
-- **Vendor-Agnostic Design**: Generic sensor abstraction layer supporting multiple inverter brands
-- **Home Assistant Integration**: Primary communication through HA API with existing vendor
-  integrations
-- **Internationalization (i18n)**: Multi-language support (Czech, English) with Mozilla Fluent
-  framework
-- **Comprehensive Monitoring**: 30+ optional sensor types including:
-  - Extended PV strings (PV1-4 individual powers)
-  - Three-phase measurements (L1/L2/L3 voltage, current, power)
-  - Battery extended metrics (SOH, BMS limits, energy totals)
-  - Grid totals (import/export, today/total yield)
-  - Temperature sensors (inverter, battery, board, boost)
-  - EPS status (Emergency Power Supply)
-  - Fault/diagnostic data
-- **Spot Price Automation**: Intelligent scheduling based on electricity spot prices
-- **Channel-Based Async**: Non-blocking async operations using crossbeam channels
-- **Optional Modbus Support**: Feature-gated direct Modbus TCP communication
+- **Multi-inverter Support**: Works with Solax inverters (Fronius and SMA planned)
+- **Spot Price Optimization**: Automatically adjusts energy usage based on current electricity
+  prices
+- **15-minute Time Block Scheduling**: Fine-grained control over energy management
+- **Debug Mode**: Safe testing environment without affecting actual hardware
+- **ECS Architecture**: Built on Bevy ECS for efficient, modular system design
+- **Home Assistant Integration**: Native integration with Home Assistant ecosystem
+- **Multi-language Support**: Fully translated UI (English, Czech)
+- **Comprehensive Monitoring**: 30+ sensor types including PV strings, battery metrics, grid data
+- **Web UI**: Built-in monitoring dashboard with real-time charts
 
 ## Internationalization
 
@@ -205,9 +203,27 @@ For commercial licensing inquiries, contact: info@solare.cz
 
 See [LICENSE](LICENSE) for full license text.
 
+[:books: Read the full add-on documentation][docs]
+
+## Support
+
+Got questions?
+
+You could [open an issue][issue] on GitLab.
+
 ## Acknowledgments
 
 - Built with [Bevy ECS](https://bevyengine.org/)
 - Web framework: [Axum](https://github.com/tokio-rs/axum)
 - Internationalization: [Fluent](https://projectfluent.org/)
 - Templating: [Askama](https://github.com/djc/askama)
+
+[aarch64-shield]: https://img.shields.io/badge/aarch64-yes-green.svg
+[amd64-shield]: https://img.shields.io/badge/amd64-yes-green.svg
+[armv7-shield]: https://img.shields.io/badge/armv7-yes-green.svg
+[docs]: https://github.com/your-org/fluxion/blob/main/fluxion/DOCS.md
+[issue]: https://gitlab.com/your-org/fluxion/issues
+[license-shield]: https://img.shields.io/badge/License-AGPL%20v3-blue.svg
+[project-stage-shield]: https://img.shields.io/badge/project%20stage-production%20ready-brightgreen.svg
+[releases]: https://github.com/your-org/fluxion/releases
+[releases-shield]: https://img.shields.io/github/release/your-org/fluxion.svg
