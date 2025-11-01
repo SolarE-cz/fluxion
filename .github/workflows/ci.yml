@@ -171,6 +171,19 @@ jobs:
             crane push /tmp/fluxion-amd64.tar ${{ env.GHCR_IMAGE }}:latest-amd64
           fi
 
+      - name: Push PR preview to GHCR
+        # Only push on PRs when manually triggered
+        if: github.event_name == 'pull_request'
+        run: |
+          PR_NUM="${{ github.event.pull_request.number }}"
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+
+          echo "Pushing PR #${PR_NUM} preview images..."
+          crane push /tmp/fluxion-amd64.tar ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-amd64
+          crane push /tmp/fluxion-amd64.tar ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-amd64
+
+          echo "✅ Pushed preview images for PR #${PR_NUM}"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -231,6 +244,19 @@ jobs:
             crane push /tmp/fluxion-aarch64.tar ${{ env.GHCR_IMAGE }}:latest-aarch64
           fi
 
+      - name: Push PR preview to GHCR
+        # Only push on PRs when manually triggered
+        if: github.event_name == 'pull_request'
+        run: |
+          PR_NUM="${{ github.event.pull_request.number }}"
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+
+          echo "Pushing PR #${PR_NUM} preview images..."
+          crane push /tmp/fluxion-aarch64.tar ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-aarch64
+          crane push /tmp/fluxion-aarch64.tar ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-aarch64
+
+          echo "✅ Pushed preview images for PR #${PR_NUM}"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -238,10 +264,137 @@ jobs:
           path: /tmp/fluxion-aarch64.tar
           retention-days: 7
 
-  # ============= Release Jobs (tags only) =============
+  # ============= Multi-arch Manifest Jobs =============
 
-  create-manifest:
-    name: Create Multi-arch Manifest
+  create-manifest-pr:
+    name: Create PR Preview Multi-arch Manifest
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [build-amd64, build-aarch64]
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Install crane
+        run: |
+          nix profile install nixpkgs#go-containerregistry
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Create and push PR preview multi-arch manifest
+        run: |
+          PR_NUM="${{ github.event.pull_request.number }}"
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
+
+          echo "Creating multi-arch manifest for PR #${PR_NUM}..."
+
+          # Create index for PR preview (latest commit on PR)
+          crane index append \
+            -m ${{ env.GHCR_IMAGE }}:pr-${PR_NUM} \
+            -t ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-amd64 \
+            -t ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-aarch64
+
+          # Create index for specific commit
+          crane index append \
+            -m ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA} \
+            -t ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-amd64 \
+            -t ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-aarch64
+
+          echo "✅ PR preview multi-arch manifests created"
+          echo "PR_NUM=${PR_NUM}" >> $GITHUB_ENV
+          echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_ENV
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNum = process.env.PR_NUM;
+            const sha = process.env.SHORT_SHA;
+            const registry = process.env.GHCR_REGISTRY;
+            const image = process.env.GHCR_IMAGE;
+
+            const body = `## 🚀 Preview Build Ready!
+
+            Your PR preview images have been built and pushed to the container registry.
+
+            ### Pull the preview image:
+
+            \`\`\`bash
+            # Latest commit on this PR (auto-updates)
+            docker pull ${image}:pr-${prNum}
+
+            # Specific commit (pinned)
+            docker pull ${image}:pr-${prNum}-${sha}
+            \`\`\`
+
+            ### Architecture-specific images:
+            \`\`\`bash
+            # AMD64
+            docker pull ${image}:pr-${prNum}-amd64
+
+            # ARM64/aarch64
+            docker pull ${image}:pr-${prNum}-aarch64
+            \`\`\`
+
+            **Commit**: \`${sha}\` (\`${{ github.sha }}\`)`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  create-manifest-latest:
+    name: Create Latest Multi-arch Manifest
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [build-amd64, build-aarch64]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+
+      - name: Install crane
+        run: |
+          nix profile install nixpkgs#go-containerregistry
+
+      - name: Login to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Create and push latest multi-arch manifest
+        run: |
+          echo "Creating multi-arch manifest for latest..."
+
+          # Create index for latest
+          crane index append \
+            -m ${{ env.GHCR_IMAGE }}:latest \
+            -t ${{ env.GHCR_IMAGE }}:latest-amd64 \
+            -t ${{ env.GHCR_IMAGE }}:latest-aarch64
+
+          echo "✅ Latest multi-arch manifest created and pushed"
+
+  create-manifest-release:
+    name: Create Release Multi-arch Manifest
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     needs: [build-amd64, build-aarch64]
@@ -265,20 +418,19 @@ jobs:
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | crane auth login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Create and push multi-arch manifest
+      - name: Create and push release multi-arch manifests
         run: |
           TAG="${{ github.ref_name }}"
-          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-8)
 
           echo "Creating multi-arch manifest for tag ${TAG}..."
 
           # Create index for tagged version
           crane index append \
             -m ${{ env.GHCR_IMAGE }}:${TAG} \
-            -t ${{ env.GHCR_IMAGE }}:${SHORT_SHA}-amd64 \
-            -t ${{ env.GHCR_IMAGE }}:${SHORT_SHA}-aarch64
+            -t ${{ env.GHCR_IMAGE }}:${TAG}-amd64 \
+            -t ${{ env.GHCR_IMAGE }}:${TAG}-aarch64
 
-          # Create index for latest
+          # Also update latest
           crane index append \
             -m ${{ env.GHCR_IMAGE }}:latest \
             -t ${{ env.GHCR_IMAGE }}:latest-amd64 \
@@ -286,11 +438,13 @@ jobs:
 
           echo "✅ Multi-arch manifests created and pushed"
 
+  # ============= Release Jobs (tags only) =============
+
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
-    needs: [create-manifest]
+    needs: [create-manifest-release]
     permissions:
       contents: write
       packages: read
