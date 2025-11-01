@@ -16,9 +16,9 @@ RUN apk add --no-cache \
 # Set working directory
 WORKDIR /build
 
-# Copy workspace configuration
-COPY Cargo.toml ./
-COPY crates/ ./crates/
+# Copy workspace configuration from fluxion/ subdirectory
+COPY fluxion/Cargo.toml ./
+COPY fluxion/crates/ ./crates/
 
 # Build release binary
 RUN cargo build --release --bin fluxion-main
