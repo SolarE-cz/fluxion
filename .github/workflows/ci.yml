@@ -299,17 +299,29 @@ jobs:
 
           echo "Creating multi-arch manifest for PR #${PR_NUM}..."
 
+          # Ensure architecture-specific images exist before creating manifest
+          echo "Verifying architecture-specific images exist..."
+          crane manifest ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-amd64 > /dev/null || { echo "Error: amd64 image not found"; exit 1; }
+          crane manifest ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-aarch64 > /dev/null || { echo "Error: aarch64 image not found"; exit 1; }
+
           # Create index for PR preview (latest commit on PR)
-          crane index append \
-            -m ${{ env.GHCR_IMAGE }}:pr-${PR_NUM} \
-            -t ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-amd64 \
-            -t ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-aarch64
+          # Use docker manifest instead, which creates new manifests properly
+          docker manifest create ${{ env.GHCR_IMAGE }}:pr-${PR_NUM} \
+            ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-amd64 \
+            ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-aarch64
+          
+          docker manifest push ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}
+
+          # Verify images exist for specific commit
+          crane manifest ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-amd64 > /dev/null || { echo "Error: amd64 image not found for commit"; exit 1; }
+          crane manifest ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-aarch64 > /dev/null || { echo "Error: aarch64 image not found for commit"; exit 1; }
 
           # Create index for specific commit
-          crane index append \
-            -m ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA} \
-            -t ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-amd64 \
-            -t ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-aarch64
+          docker manifest create ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA} \
+            ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-amd64 \
+            ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}-aarch64
+          
+          docker manifest push ${{ env.GHCR_IMAGE }}:pr-${PR_NUM}-${SHORT_SHA}
 
           echo "✅ PR preview multi-arch manifests created"
           echo "PR_NUM=${PR_NUM}" >> $GITHUB_ENV
