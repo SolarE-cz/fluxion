@@ -23,4 +23,4 @@ bashio::log.info "Log level: ${LOG_LEVEL}"
 bashio::log.info "Starting FluxION ECS binary..."
 
 # Run the FluxION binary
-exec /usr/local/bin/fluxion-main
+exec /usr/local/bin/fluxion
