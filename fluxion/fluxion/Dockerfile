@@ -7,13 +7,20 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install build dependencies
 RUN apk add --no-cache \
-    cargo \
-    rust \
+    curl \
     git \
     openssl-dev \
     musl-dev \
     pkgconfig \
     build-base
+
+# Install rustup and Rust toolchain
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# Copy rust-toolchain.toml to install correct version
+COPY fluxion/rust-toolchain.toml ./rust-toolchain.toml
+RUN rustup show
 
 # Set working directory
 WORKDIR /build
