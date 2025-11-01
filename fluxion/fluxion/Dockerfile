@@ -28,7 +28,7 @@ FROM ${BUILD_FROM}
 
 # Install runtime dependencies
 RUN apk add --no-cache \
-    libgcc=14.2.0-r4
+    libgcc
 
 # Copy root filesystem
 COPY fluxion/fluxion/rootfs /
