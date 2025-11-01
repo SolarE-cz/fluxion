@@ -23,7 +23,7 @@ COPY fluxion/Cargo.toml ./
 COPY fluxion/crates/ ./crates/
 
 # Build release binary
-RUN cargo build --release --bin fluxion-main
+RUN cargo build --release --bin fluxion
 
 # Create final image
 FROM ${BUILD_FROM}
@@ -36,7 +36,7 @@ RUN apk add --no-cache \
 COPY fluxion/fluxion/rootfs /
 
 # Copy binary from builder
-COPY --from=builder /build/target/release/fluxion-main /usr/local/bin/fluxion-main
+COPY --from=builder /build/target/release/fluxion /usr/local/bin/fluxion
 
 # Build arguments
 ARG BUILD_ARCH
