@@ -1,17 +1,17 @@
 ARG BUILD_FROM=ghcr.io/hassio-addons/base:18.2.1
 # hadolint ignore=DL3006
-FROM ${BUILD_FROM} as builder
+FROM ${BUILD_FROM} AS builder
 
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install build dependencies
 RUN apk add --no-cache \
-    cargo=1.85.0-r0 \
-    rust=1.85.0-r0 \
-    git=2.47.1-r0 \
-    openssl-dev=3.4.0-r3 \
-    musl-dev=1.2.5-r2
+    cargo \
+    rust \
+    git \
+    openssl-dev \
+    musl-dev
 
 # Set working directory
 WORKDIR /build

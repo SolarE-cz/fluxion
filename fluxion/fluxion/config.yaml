@@ -67,8 +67,7 @@ schema:
     update_interval_secs: int(10,3600)?
 
 # Image configuration
-# image: "ghcr.io/solare-cz/fluxion-{arch}"
-# Commented out - will build locally from Dockerfile
+image: "ghcr.io/solare-cz/fluxion-{arch}"
 
 # Add-on labels
 labels:
