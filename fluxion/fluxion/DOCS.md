@@ -56,7 +56,7 @@ pricing:
   fixed_buy_prices: []
   fixed_sell_prices: []
 control:
-  max_export_power_w: 10000
+  maximum_export_power_w: 10000
   update_interval_secs: 60
 ```
 
@@ -175,7 +175,7 @@ Optional list of fixed electricity sell prices if not using spot prices.
 
 Fine-tune FluxION's control behavior.
 
-#### Option: `control.max_export_power_w`
+#### Option: `control.maximum_export_power_w`
 
 Maximum power (in watts) that can be exported to the grid.
 

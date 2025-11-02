@@ -53,7 +53,7 @@ pricing:
   force_charge_hours: 4
   force_discharge_hours: 2
 control:
-  max_export_power_w: 10000
+  maximum_export_power_w: 10000
   update_interval_secs: 60
 ```
 
@@ -91,7 +91,7 @@ Price configuration:
 
 Control parameters:
 
-- `max_export_power_w`: Maximum export power limit (watts)
+- `maximum_export_power_w`: Maximum export power limit (watts)
 - `update_interval_secs`: How often to check and update (seconds)
 
 ## Support

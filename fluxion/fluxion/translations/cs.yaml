@@ -68,7 +68,7 @@ configuration:
   control:
     name: Nastavení řízení
     description: Jemné doladění chování řízení FluxION.
-  max_export_power_w:
+  maximum_export_power_w:
     name: Maximální výkon exportu (W)
     description: Maximální výkon (ve wattech), který může být exportován do sítě.
   update_interval_secs:

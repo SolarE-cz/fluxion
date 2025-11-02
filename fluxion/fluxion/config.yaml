@@ -1,6 +1,6 @@
 # Home Assistant Add-on Configuration
 name: FluxION ECS
-version: "0.1.6"
+version: "0.1.7"
 slug: fluxion
 description: "Solar plant automation based on electricity spot prices"
 url: "https://github.com/SolarE-cz/fluxion"
@@ -40,7 +40,7 @@ options:
     fixed_buy_prices: []
     fixed_sell_prices: []
   control:
-    max_export_power_w: 10000
+    maximum_export_power_w: 10000
     update_interval_secs: 60
   strategies:
     winter_peak_discharge:
@@ -94,7 +94,7 @@ schema:
     fixed_sell_prices:
       - float?
   control:
-    max_export_power_w: int(0,)?
+    maximum_export_power_w: int(0,)?
     update_interval_secs: int(10,3600)?
   strategies:
     winter_peak_discharge:

@@ -452,7 +452,7 @@ pub struct GenericInverterState {
 #[derive(Resource, Debug, Clone, Serialize, Deserialize)]
 pub struct SystemConfig {
     /// Maximum export power limit (W)
-    pub max_export_power_w: u32,
+    pub maximum_export_power_w: u32,
     
     /// Use spot prices for buying decisions
     pub use_spot_prices_to_buy: bool,

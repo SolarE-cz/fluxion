@@ -68,7 +68,7 @@ configuration:
   control:
     name: Control Settings
     description: Fine-tune FluxION's control behavior.
-  max_export_power_w:
+  maximum_export_power_w:
     name: Maximum Export Power (W)
     description: Maximum power (in watts) that can be exported to the grid.
   update_interval_secs:

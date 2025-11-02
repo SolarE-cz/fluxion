@@ -195,7 +195,7 @@ docker run --rm \
      force_charge_hours: 4
      force_discharge_hours: 2
    control:
-     max_export_power_w: 10000
+     maximum_export_power_w: 10000
      update_interval_secs: 60
    ```
 
@@ -246,7 +246,7 @@ pricing:
 
 ```yaml
 control:
-  max_export_power_w: 10000      # Maximum export power limit
+  maximum_export_power_w: 10000      # Maximum export power limit
   update_interval_secs: 60       # How often to check schedule (seconds)
 ```
 
