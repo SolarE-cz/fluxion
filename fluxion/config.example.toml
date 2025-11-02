@@ -28,7 +28,7 @@ topology = "independent" # Options: independent, master, slave
 
 # Pricing Configuration
 [pricing]
-spot_price_entity = "sensor.current_spot_electricity_price" # Your HA spot price sensor
+spot_price_entity = "sensor.current_spot_electricity_price_15min" # Your HA spot price sensor
 # Optional: separate sensor for tomorrow's prices (if your integration splits today/tomorrow)
 tomorrow_price_entity = "sensor.tomorrow_spot_electricity_15min_order"
 use_spot_prices_to_buy = true

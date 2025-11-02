@@ -115,7 +115,7 @@ pub fn parse_spot_price_response(entity_state: &serde_json::Value) -> Result<Spo
         1. Forecast sensor with 'forecast' attribute containing array of {{start, end, price}} objects\n\
         2. Hourly sensor with 'today' and 'tomorrow' attributes containing price arrays\n\
         3. Timestamp-keyed sensor with ISO 8601 timestamp keys mapping to prices\n\n\
-        Please check your sensor.current_spot_electricity_price entity in Home Assistant.",
+        Please check your sensor.current_spot_electricity_price_15min entity in Home Assistant.",
         attrs
     );
 }

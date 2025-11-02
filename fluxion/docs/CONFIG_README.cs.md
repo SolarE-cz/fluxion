@@ -135,7 +135,7 @@ Nastavení cen elektřiny pro optimalizační rozhodnutí.
 ```toml
 [pricing]
 # Senzor Home Assistant poskytující aktuální spotovou cenu elektřiny
-spot_price_entity = "sensor.current_spot_electricity_price"
+spot_price_entity = "sensor.current_spot_electricity_price_15min"
 
 # Používat spotové ceny pro rozhodnutí o nákupu
 use_spot_prices_to_buy = true
@@ -165,7 +165,7 @@ fixed_sell_prices = [
 
 - ID entity Home Assistant poskytující aktuální spotovou cenu elektřiny
 - Běžné příklady:
-  - `"sensor.current_spot_electricity_price"`
+  - `"sensor.current_spot_electricity_price_15min"`
   - `"sensor.nordpool_kwh_fi_eur_3_10_0"`
   - `"sensor.spot_price_kwh"`
 - Musí poskytovat cenu v měně za kWh
@@ -689,7 +689,7 @@ entity_prefix = "solax"
 topology = "independent"
 
 [pricing]
-spot_price_entity = "sensor.current_spot_electricity_price"
+spot_price_entity = "sensor.current_spot_electricity_price_15min"
 use_spot_prices_to_buy = true
 use_spot_prices_to_sell = true
 fixed_buy_prices = [0.05; 24]

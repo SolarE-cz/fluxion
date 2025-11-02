@@ -316,7 +316,7 @@ impl Default for AppConfig {
                 master: None,
             }],
             pricing: PricingConfig {
-                spot_price_entity: "sensor.current_spot_electricity_price".to_string(),
+                spot_price_entity: "sensor.current_spot_electricity_price_15min".to_string(),
                 tomorrow_price_entity: None,
                 use_spot_prices_to_buy: true,
                 use_spot_prices_to_sell: true,

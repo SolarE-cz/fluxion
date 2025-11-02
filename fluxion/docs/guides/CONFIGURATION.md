@@ -87,7 +87,7 @@ Configure electricity pricing for optimization decisions.
 ```toml
 [pricing]
 # Home Assistant sensor providing spot prices
-spot_price_entity = "sensor.current_spot_electricity_price"
+spot_price_entity = "sensor.current_spot_electricity_price_15min"
 
 # Use spot prices for buy/sell decisions
 use_spot_prices_to_buy = true

@@ -134,7 +134,7 @@ Configure electricity pricing for optimization decisions.
 ```toml
 [pricing]
 # Home Assistant sensor providing current spot electricity price
-spot_price_entity = "sensor.current_spot_electricity_price"
+spot_price_entity = "sensor.current_spot_electricity_price_15min"
 
 # Use real-time spot prices for buying decisions
 use_spot_prices_to_buy = true
@@ -164,7 +164,7 @@ fixed_sell_prices = [
 
 - Home Assistant entity ID that provides current electricity spot price
 - Common examples:
-  - `"sensor.current_spot_electricity_price"`
+  - `"sensor.current_spot_electricity_price_15min"`
   - `"sensor.nordpool_kwh_fi_eur_3_10_0"`
   - `"sensor.spot_price_kwh"`
 - Must provide price in currency per kWh
@@ -688,7 +688,7 @@ entity_prefix = "solax"
 topology = "independent"
 
 [pricing]
-spot_price_entity = "sensor.current_spot_electricity_price"
+spot_price_entity = "sensor.current_spot_electricity_price_15min"
 use_spot_prices_to_buy = true
 use_spot_prices_to_sell = true
 fixed_buy_prices = [0.05; 24]

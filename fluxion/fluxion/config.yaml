@@ -32,7 +32,7 @@ options:
       min_battery_soc: 10
       max_battery_soc: 100
   pricing:
-    spot_price_entity: "sensor.current_spot_electricity_prices"
+    spot_price_entity: "sensor.current_spot_electricity_price_15min"
     use_spot_to_buy: true
     use_spot_to_sell: true
     force_charge_hours: 4

@@ -1957,7 +1957,7 @@ options:
   #     master: "solax_master"
   
   # === Pricing ===
-  spot_price_entity: "sensor.current_spot_electricity_price"
+  spot_price_entity: "sensor.current_spot_electricity_price_15min"
   use_spot_prices_to_buy: true
   use_spot_prices_to_sell: true
   
@@ -2130,7 +2130,7 @@ impl AppConfig {
             },
             pricing: PricingConfig {
                 spot_price_entity: std::env::var("SPOT_PRICE_ENTITY")
-                    .unwrap_or_else(|_| "sensor.current_spot_electricity_price".to_string()),
+                    .unwrap_or_else(|_| "sensor.current_spot_electricity_price_15min".to_string()),
                 use_spot_prices_to_buy: true,
                 use_spot_prices_to_sell: true,
                 fixed_buy_prices: [0.05; 24],

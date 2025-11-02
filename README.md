@@ -83,7 +83,7 @@ entity_prefix = "solax"
 topology = "independent"
 
 [pricing]
-spot_price_entity = "sensor.current_spot_electricity_price"
+spot_price_entity = "sensor.current_spot_electricity_price_15min"
 use_spot_prices_to_buy = true
 use_spot_prices_to_sell = true
 fixed_buy_prices = [0.05; 24]
@@ -277,7 +277,7 @@ entity_prefix = "solax"
 topology = "independent"
 
 [pricing]
-spot_price_entity = "sensor.current_spot_electricity_price"
+spot_price_entity = "sensor.current_spot_electricity_price_15min"
 use_spot_prices_to_buy = true
 use_spot_prices_to_sell = true
 fixed_buy_prices = [1.5; 24]
