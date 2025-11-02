@@ -1,6 +1,6 @@
 # Home Assistant Add-on Configuration
 name: FluxION ECS
-version: "0.1.3"
+version: "0.1.4"
 slug: fluxion
 description: "Solar plant automation based on electricity spot prices"
 url: "https://github.com/SolarE-cz/fluxion"
@@ -33,42 +33,48 @@ options:
       max_battery_soc: 100
   pricing:
     spot_price_entity: "sensor.current_spot_electricity_prices"
-    use_spot_to_buy: true
-    use_spot_to_sell: true
-    force_charge_hours: 4
-    force_discharge_hours: 2
+    use_spot_prices_to_buy: true
+    use_spot_prices_to_sell: true
     fixed_buy_prices: []
     fixed_sell_prices: []
   control:
-    max_export_power_w: 10000
+    maximum_export_power_w: 10000
+    force_charge_hours: 4
+    force_discharge_hours: 2
+    min_battery_soc: 10
+    max_battery_soc: 100
+  system:
+    debug_mode: true
     update_interval_secs: 60
+    log_level: "info"
 
 schema:
-  debug_mode: bool
-  log_level: list(trace|debug|info|warning|error)?
   inverters:
     - id: str
       vendor: list(solax|fronius|sma)?
       entity_prefix: str
       topology: list(independent|master|slave)?
-      master_id: str?
-      slave_ids:
+      master: str?
+      slaves:
         - str?
-      min_battery_soc: float(0,100)?
-      max_battery_soc: float(0,100)?
   pricing:
-    spot_price_entity: str?
-    use_spot_to_buy: bool?
-    use_spot_to_sell: bool?
-    force_charge_hours: int(0,24)?
-    force_discharge_hours: int(0,24)?
+    spot_price_entity: str
+    use_spot_prices_to_buy: bool?
+    use_spot_prices_to_sell: bool?
     fixed_buy_prices:
       - float?
     fixed_sell_prices:
       - float?
   control:
-    max_export_power_w: int(0,)?
+    maximum_export_power_w: int(0,)?
+    force_charge_hours: int(0,24)?
+    force_discharge_hours: int(0,24)?
+    min_battery_soc: float(0,100)?
+    max_battery_soc: float(0,100)?
+  system:
+    debug_mode: bool
     update_interval_secs: int(10,3600)?
+    log_level: list(trace|debug|info|warning|error)?
 
 # Image configuration
 image: "ghcr.io/solare-cz/fluxion-{arch}"
