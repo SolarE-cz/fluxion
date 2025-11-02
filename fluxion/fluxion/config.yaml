@@ -40,7 +40,7 @@ options:
 
 schema:
   debug_mode: bool
-  log_level: list(trace|debug|info|warn|error)?
+  log_level: list(trace|debug|info|warning|error)?
   inverters:
     - id: str
       vendor: list(solax|fronius|sma)?
