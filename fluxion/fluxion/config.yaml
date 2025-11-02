@@ -1,6 +1,6 @@
 # Home Assistant Add-on Configuration
 name: FluxION ECS
-version: "0.1.5"
+version: "0.1.6"
 slug: fluxion
 description: "Solar plant automation based on electricity spot prices"
 url: "https://github.com/SolarE-cz/fluxion"
@@ -33,8 +33,8 @@ options:
       max_battery_soc: 100
   pricing:
     spot_price_entity: "sensor.current_spot_electricity_price_15min"
-    use_spot_to_buy: true
-    use_spot_to_sell: true
+    use_spot_prices_to_buy: true
+    use_spot_prices_to_sell: true
     force_charge_hours: 4
     force_discharge_hours: 2
     fixed_buy_prices: []
@@ -85,8 +85,8 @@ schema:
       max_battery_soc: float(0,100)?
   pricing:
     spot_price_entity: str?
-    use_spot_to_buy: bool?
-    use_spot_to_sell: bool?
+    use_spot_prices_to_buy: bool?
+    use_spot_prices_to_sell: bool?
     force_charge_hours: int(0,24)?
     force_discharge_hours: int(0,24)?
     fixed_buy_prices:

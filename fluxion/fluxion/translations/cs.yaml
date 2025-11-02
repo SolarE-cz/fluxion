@@ -39,12 +39,12 @@ configuration:
     name: Entita spotové ceny
     description: >-
       Home Assistant entita poskytující aktuální spotové ceny elektřiny.
-  use_spot_to_buy:
+  use_spot_prices_to_buy:
     name: Použít spotové ceny pro nákup
     description: >-
       Povolit použití spotových cen k určení, kdy nakupovat elektřinu ze sítě
       (dobíjet baterie při nízkých cenách).
-  use_spot_to_sell:
+  use_spot_prices_to_sell:
     name: Použít spotové ceny pro prodej
     description: >-
       Povolit použití spotových cen k určení, kdy prodávat elektřinu do sítě

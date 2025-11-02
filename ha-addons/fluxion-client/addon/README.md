@@ -48,8 +48,8 @@ inverters:
     max_battery_soc: 100
 pricing:
   spot_price_entity: "sensor.current_spot_electricity_prices"
-  use_spot_to_buy: true
-  use_spot_to_sell: true
+  use_spot_prices_to_buy: true
+  use_spot_prices_to_sell: true
   force_charge_hours: 4
   force_discharge_hours: 2
 control:
@@ -82,8 +82,8 @@ List of inverters to control. Each inverter requires:
 Price configuration:
 
 - `spot_price_entity`: Home Assistant entity providing spot prices
-- `use_spot_to_buy`: Use spot prices for charging decisions
-- `use_spot_to_sell`: Use spot prices for discharging decisions
+- `use_spot_prices_to_buy`: Use spot prices for charging decisions
+- `use_spot_prices_to_sell`: Use spot prices for discharging decisions
 - `force_charge_hours`: Number of cheapest hours for charging
 - `force_discharge_hours`: Number of most expensive hours for discharging
 

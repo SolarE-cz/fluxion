@@ -39,12 +39,12 @@ configuration:
     name: Spot Price Entity
     description: >-
       The Home Assistant entity that provides current electricity spot prices.
-  use_spot_to_buy:
+  use_spot_prices_to_buy:
     name: Use Spot Prices for Buying
     description: >-
       Enable using spot prices to determine when to buy electricity from the
       grid (charge batteries when prices are low).
-  use_spot_to_sell:
+  use_spot_prices_to_sell:
     name: Use Spot Prices for Selling
     description: >-
       Enable using spot prices to determine when to sell electricity to the

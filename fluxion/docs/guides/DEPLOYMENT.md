@@ -190,8 +190,8 @@ docker run --rm \
        max_battery_soc: 100
    pricing:
      spot_price_entity: sensor.current_spot_electricity_prices
-     use_spot_to_buy: true
-     use_spot_to_sell: true
+     use_spot_prices_to_buy: true
+     use_spot_prices_to_sell: true
      force_charge_hours: 4
      force_discharge_hours: 2
    control:
@@ -234,8 +234,8 @@ inverters:
 ```yaml
 pricing:
   spot_price_entity: "sensor.current_spot_electricity_prices"  # HA spot price entity
-  use_spot_to_buy: true                              # Use spot prices for charge decisions
-  use_spot_to_sell: true                             # Use spot prices for discharge decisions
+  use_spot_prices_to_buy: true                              # Use spot prices for charge decisions
+  use_spot_prices_to_sell: true                             # Use spot prices for discharge decisions
   force_charge_hours: 4                              # Hours to charge (cheapest)
   force_discharge_hours: 2                           # Hours to discharge (most expensive)
   fixed_buy_prices: [0.05, 0.05, ...]              # 24 hourly prices (fallback)

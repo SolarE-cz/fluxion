@@ -49,8 +49,8 @@ inverters:
     max_battery_soc: 100
 pricing:
   spot_price_entity: "sensor.current_spot_electricity_prices"
-  use_spot_to_buy: true
-  use_spot_to_sell: true
+  use_spot_prices_to_buy: true
+  use_spot_prices_to_sell: true
   force_charge_hours: 4
   force_discharge_hours: 2
   fixed_buy_prices: []
@@ -137,14 +137,14 @@ that updates with current market prices.
 
 Example: `sensor.current_spot_electricity_prices`
 
-#### Option: `pricing.use_spot_to_buy`
+#### Option: `pricing.use_spot_prices_to_buy`
 
 Enable using spot prices to determine when to buy electricity from the grid (charge batteries when
 prices are low).
 
 Default value: `true`
 
-#### Option: `pricing.use_spot_to_sell`
+#### Option: `pricing.use_spot_prices_to_sell`
 
 Enable using spot prices to determine when to sell electricity to the grid (discharge batteries when
 prices are high).
