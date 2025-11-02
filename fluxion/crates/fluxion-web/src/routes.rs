@@ -113,6 +113,9 @@ pub struct DashboardTemplate {
     pub timezone: Option<String>,
     pub last_update_formatted: String,
     pub next_change_formatted: Option<String>,
+    /// Ingress path prefix for HA Ingress support (e.g., "/hassio/ingress/641a79a3_fluxion")
+    /// Empty string when running standalone
+    pub ingress_path: String,
 }
 
 impl DashboardTemplate {
@@ -126,7 +129,11 @@ impl DashboardTemplate {
         clippy::too_many_lines,
         reason = "Template construction requires processing multiple data sources"
     )]
-    pub fn from_query_response(response: WebQueryResponse, i18n: Arc<I18n>) -> Self {
+    pub fn from_query_response(
+        response: WebQueryResponse,
+        i18n: Arc<I18n>,
+        ingress_path: String,
+    ) -> Self {
         let timezone = response.timezone.clone();
 
         // Format last update time in the correct timezone
@@ -441,6 +448,7 @@ impl DashboardTemplate {
             timezone: response.timezone,
             last_update_formatted,
             next_change_formatted,
+            ingress_path,
         }
     }
 }

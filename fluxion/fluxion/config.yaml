@@ -33,48 +33,96 @@ options:
       max_battery_soc: 100
   pricing:
     spot_price_entity: "sensor.current_spot_electricity_prices"
-    use_spot_prices_to_buy: true
-    use_spot_prices_to_sell: true
+    use_spot_to_buy: true
+    use_spot_to_sell: true
+    force_charge_hours: 4
+    force_discharge_hours: 2
     fixed_buy_prices: []
     fixed_sell_prices: []
   control:
-    maximum_export_power_w: 10000
-    force_charge_hours: 4
-    force_discharge_hours: 2
-    min_battery_soc: 10
-    max_battery_soc: 100
-  system:
-    debug_mode: true
+    max_export_power_w: 10000
     update_interval_secs: 60
-    log_level: "info"
+  strategies:
+    winter_peak_discharge:
+      enabled: true
+      min_spread_czk: 3.0
+      min_soc_to_start: 70.0
+      min_soc_target: 50.0
+      solar_window_start_hour: 10
+      solar_window_end_hour: 14
+      min_hours_to_solar: 4
+    solar_aware_charging:
+      enabled: true
+      solar_window_start_hour: 10
+      solar_window_end_hour: 14
+      midday_max_soc: 90.0
+      min_solar_forecast_kwh: 2.0
+    morning_precharge:
+      enabled: true
+    day_ahead_planning:
+      enabled: true
+    time_aware_charge:
+      enabled: true
+    price_arbitrage:
+      enabled: true
+    solar_first:
+      enabled: true
+    self_use:
+      enabled: true
 
 schema:
+  debug_mode: bool
+  log_level: list(trace|debug|info|warning|error)?
   inverters:
     - id: str
       vendor: list(solax|fronius|sma)?
       entity_prefix: str
       topology: list(independent|master|slave)?
-      master: str?
-      slaves:
+      master_id: str?
+      slave_ids:
         - str?
+      min_battery_soc: float(0,100)?
+      max_battery_soc: float(0,100)?
   pricing:
-    spot_price_entity: str
-    use_spot_prices_to_buy: bool?
-    use_spot_prices_to_sell: bool?
+    spot_price_entity: str?
+    use_spot_to_buy: bool?
+    use_spot_to_sell: bool?
+    force_charge_hours: int(0,24)?
+    force_discharge_hours: int(0,24)?
     fixed_buy_prices:
       - float?
     fixed_sell_prices:
       - float?
   control:
-    maximum_export_power_w: int(0,)?
-    force_charge_hours: int(0,24)?
-    force_discharge_hours: int(0,24)?
-    min_battery_soc: float(0,100)?
-    max_battery_soc: float(0,100)?
-  system:
-    debug_mode: bool
+    max_export_power_w: int(0,)?
     update_interval_secs: int(10,3600)?
-    log_level: list(trace|debug|info|warning|error)?
+  strategies:
+    winter_peak_discharge:
+      enabled: bool?
+      min_spread_czk: float?
+      min_soc_to_start: float(0,100)?
+      min_soc_target: float(0,100)?
+      solar_window_start_hour: int(0,23)?
+      solar_window_end_hour: int(0,23)?
+      min_hours_to_solar: int(0,24)?
+    solar_aware_charging:
+      enabled: bool?
+      solar_window_start_hour: int(0,23)?
+      solar_window_end_hour: int(0,23)?
+      midday_max_soc: float(0,100)?
+      min_solar_forecast_kwh: float?
+    morning_precharge:
+      enabled: bool?
+    day_ahead_planning:
+      enabled: bool?
+    time_aware_charge:
+      enabled: bool?
+    price_arbitrage:
+      enabled: bool?
+    solar_first:
+      enabled: bool?
+    self_use:
+      enabled: bool?
 
 # Image configuration
 image: "ghcr.io/solare-cz/fluxion-{arch}"

@@ -354,6 +354,7 @@ pub fn poll_price_channel(
             None, // Future: Add solar forecast integration (Solcast/Forecast.Solar API)
             None, // Future: Add consumption forecast (HA energy dashboard or ML model)
             0.8,  // Export price is typically 80% of import price
+            Some(&config.strategies_config),
         );
 
         // Update or create PriceAnalysis entity

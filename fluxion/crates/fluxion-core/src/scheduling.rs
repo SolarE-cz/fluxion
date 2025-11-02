@@ -74,6 +74,7 @@ impl Default for ScheduleConfig {
 /// * `solar_forecast` - Optional solar generation forecast per block (kWh)
 /// * `consumption_forecast` - Optional consumption forecast per block (kWh)
 /// * `export_price_multiplier` - Export price as fraction of import price (default: 0.8)
+/// * `strategies_config` - Optional strategies configuration (uses defaults if None)
 ///
 /// # Returns
 /// Complete `OperationSchedule` with economically optimized mode assignments
@@ -85,13 +86,18 @@ pub fn generate_schedule_with_optimizer(
     solar_forecast: Option<&[f32]>,
     consumption_forecast: Option<&[f32]>,
     export_price_multiplier: f32,
+    strategies_config: Option<&crate::strategy::SeasonalStrategiesConfig>,
 ) -> OperationSchedule {
     if time_block_prices.is_empty() {
         info!("Cannot generate schedule from empty price data");
         return OperationSchedule::default();
     }
 
-    let optimizer = AdaptiveSeasonalOptimizer::with_defaults();
+    let optimizer = if let Some(config) = strategies_config {
+        AdaptiveSeasonalOptimizer::with_config(config)
+    } else {
+        AdaptiveSeasonalOptimizer::with_defaults()
+    };
     let mut scheduled_blocks = Vec::new();
     let mut total_profit = 0.0;
 
@@ -1117,6 +1123,7 @@ mod tests {
             None, // solar_forecast
             None, // consumption_forecast
             0.8,  // export_price_multiplier
+            None, // strategies_config: use defaults
         );
 
         assert_eq!(schedule.scheduled_blocks.len(), 3);

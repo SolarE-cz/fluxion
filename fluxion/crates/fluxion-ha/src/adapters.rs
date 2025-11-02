@@ -323,6 +323,7 @@ impl InverterDataSource for HomeAssistantInverterAdapter {
 pub struct CzSpotPriceAdapter {
     client: Arc<HomeAssistantClient>,
     entity_id: String,
+    tomorrow_entity_id: Option<String>,
 }
 
 impl CzSpotPriceAdapter {
@@ -331,6 +332,20 @@ impl CzSpotPriceAdapter {
         Self {
             client,
             entity_id: entity_id.into(),
+            tomorrow_entity_id: None,
+        }
+    }
+
+    /// Create a new adapter with separate today and tomorrow sensors
+    pub fn with_tomorrow_sensor(
+        client: Arc<HomeAssistantClient>,
+        today_entity_id: impl Into<String>,
+        tomorrow_entity_id: impl Into<String>,
+    ) -> Self {
+        Self {
+            client,
+            entity_id: today_entity_id.into(),
+            tomorrow_entity_id: Some(tomorrow_entity_id.into()),
         }
     }
 }
@@ -351,11 +366,27 @@ impl PriceDataSource for CzSpotPriceAdapter {
         debug!("   Attributes type: {:?}", state.attributes);
         if let Some(obj) = state.attributes.as_object() {
             debug!("   Attributes keys: {:?}", obj.keys().collect::<Vec<_>>());
-        } else {
-            warn!("   Attributes is not an object!");
         }
 
-        // Build a JSON value from the entity state for parsing
+        // If tomorrow sensor is configured, fetch from both sensors
+        if let Some(tomorrow_entity_id) = &self.tomorrow_entity_id {
+            info!("💰 [ADAPTER] Also reading tomorrow prices from: {tomorrow_entity_id}");
+
+            let tomorrow_state = match self.client.get_state(tomorrow_entity_id).await {
+                Ok(state) => Some(state),
+                Err(e) => {
+                    warn!("⚠️ Failed to fetch tomorrow prices (will use today only): {e}");
+                    None
+                }
+            };
+
+            if let Some(tomorrow_state) = tomorrow_state {
+                // Try to merge today and tomorrow data
+                return self.merge_today_tomorrow_sensors(&state, &tomorrow_state);
+            }
+        }
+
+        // Fallback to single sensor parsing
         let entity_json = serde_json::json!({
             "state": state.state,
             "attributes": state.attributes,
@@ -399,6 +430,71 @@ impl PriceDataSource for CzSpotPriceAdapter {
 
     fn name(&self) -> &str {
         "CzSpotPrice"
+    }
+}
+
+impl CzSpotPriceAdapter {
+    /// Merge today and tomorrow sensor data into a single price dataset
+    fn merge_today_tomorrow_sensors(
+        &self,
+        today_state: &crate::types::HaEntityState,
+        tomorrow_state: &crate::types::HaEntityState,
+    ) -> Result<SpotPriceData> {
+        // Extract "today" array from today sensor
+        let today_array = today_state
+            .attributes
+            .get("today")
+            .and_then(|v| v.as_array())
+            .context("Today sensor missing 'today' array attribute")?;
+
+        // Extract "today" array from tomorrow sensor (represents tomorrow's data)
+        let tomorrow_array = tomorrow_state
+            .attributes
+            .get("today")
+            .and_then(|v| v.as_array())
+            .context("Tomorrow sensor missing 'today' array attribute")?;
+
+        debug!(
+            "   Merging: {} today blocks + {} tomorrow blocks",
+            today_array.len(),
+            tomorrow_array.len()
+        );
+
+        // Use the existing parse_price_arrays function from fluxion_core
+        let merged_json = serde_json::json!({
+            "attributes": {
+                "today": today_array,
+                "tomorrow": tomorrow_array,
+            },
+            "last_updated": today_state.last_updated,
+        });
+
+        let price_data = fluxion_core::parse_spot_price_response(&merged_json)
+            .context("Failed to merge today/tomorrow price data")?;
+
+        info!(
+            "✅ [ADAPTER] Merged {} total price blocks ({} today + {} tomorrow)",
+            price_data.time_block_prices.len(),
+            today_array.len(),
+            tomorrow_array.len()
+        );
+
+        if !price_data.time_block_prices.is_empty() {
+            let first = &price_data.time_block_prices[0];
+            let last = price_data.time_block_prices.last().unwrap();
+            debug!(
+                "   First block: {} at {:.4} CZK/kWh",
+                first.block_start.format("%Y-%m-%d %H:%M"),
+                first.price_czk_per_kwh
+            );
+            debug!(
+                "   Last block:  {} at {:.4} CZK/kWh",
+                last.block_start.format("%Y-%m-%d %H:%M"),
+                last.price_czk_per_kwh
+            );
+        }
+
+        Ok(price_data)
     }
 }
 

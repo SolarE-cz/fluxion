@@ -9,7 +9,7 @@
             {% if debug_mode %}
             <div class="badge debug-badge">🔍 {{ self.t("system-debug-mode") }}</div>
             {% endif %}
-            <a href="/export" class="export-button" download>
+            <a href="{{ ingress_path }}/export" class="export-button" download>
                 <span>📊</span>
                 <span>Export Data</span>
             </a>
@@ -18,7 +18,7 @@
     
     <div id="live-data" 
          hx-ext="sse" 
-         sse-connect="/stream" 
+         sse-connect="{{ ingress_path }}/stream" 
          sse-swap="update"
          hx-swap="innerHTML">
 
@@ -722,8 +722,9 @@
     
     <script>
         // Refresh chart data once per minute (independent of SSE)
+        const ingressPath = "{{ ingress_path }}";
         setInterval(function() {
-            fetch('/chart-data')
+            fetch(ingressPath + '/chart-data')
                 .then(response => response.json())
                 .then(data => {
                     if (window.priceChartInstance && data) {
@@ -780,7 +781,8 @@
         const FETCH_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
         
         function fetchAndUpdateSchedule() {
-            fetch('/chart-data')
+            const ingressPath = "{{ ingress_path }}";
+            fetch(ingressPath + '/chart-data')
                 .then(response => response.json())
                 .then(chartData => {
                     if (!chartData) return;

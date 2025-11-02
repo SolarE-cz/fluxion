@@ -23,6 +23,8 @@ use fluxion_i18n::{I18n, I18nError, Language};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+use crate::strategy::SeasonalStrategiesConfig;
+
 // ============= System Configuration =============
 
 /// Central configuration resource for the FluxION system
@@ -32,6 +34,8 @@ pub struct SystemConfig {
     pub pricing_config: PricingConfig,
     pub control_config: ControlConfig,
     pub system_config: SystemSettingsConfig,
+    #[serde(default)]
+    pub strategies_config: SeasonalStrategiesConfig,
 }
 
 /// Configuration for a single inverter
@@ -55,6 +59,9 @@ pub enum InverterTopology {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PricingConfig {
     pub spot_price_entity: String,
+    /// Optional separate sensor for tomorrow's prices
+    #[serde(default)]
+    pub tomorrow_price_entity: Option<String>,
     pub use_spot_prices_to_buy: bool,
     pub use_spot_prices_to_sell: bool,
     pub fixed_buy_price_czk: f32,
@@ -155,6 +162,84 @@ pub struct SystemSettingsConfig {
     pub language: String, // Language code: "en", "cs", etc.
     #[serde(skip)]
     pub timezone: Option<String>, // Home Assistant timezone (fetched at runtime)
+}
+
+/// Strategies configuration for core module
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct StrategiesConfigCore {
+    #[serde(default)]
+    pub winter_peak_discharge: WinterPeakDischargeConfigCore,
+    #[serde(default)]
+    pub solar_aware_charging: SolarAwareChargingConfigCore,
+    #[serde(default)]
+    pub morning_precharge: StrategyEnabledConfigCore,
+    #[serde(default)]
+    pub day_ahead_planning: StrategyEnabledConfigCore,
+    #[serde(default)]
+    pub time_aware_charge: StrategyEnabledConfigCore,
+    #[serde(default)]
+    pub price_arbitrage: StrategyEnabledConfigCore,
+    #[serde(default)]
+    pub solar_first: StrategyEnabledConfigCore,
+    #[serde(default)]
+    pub self_use: StrategyEnabledConfigCore,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WinterPeakDischargeConfigCore {
+    pub enabled: bool,
+    pub min_spread_czk: f32,
+    pub min_soc_to_start: f32,
+    pub min_soc_target: f32,
+    pub solar_window_start_hour: u32,
+    pub solar_window_end_hour: u32,
+    pub min_hours_to_solar: u32,
+}
+
+impl Default for WinterPeakDischargeConfigCore {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            min_spread_czk: 3.0,
+            min_soc_to_start: 70.0,
+            min_soc_target: 50.0,
+            solar_window_start_hour: 10,
+            solar_window_end_hour: 14,
+            min_hours_to_solar: 4,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SolarAwareChargingConfigCore {
+    pub enabled: bool,
+    pub solar_window_start_hour: u32,
+    pub solar_window_end_hour: u32,
+    pub midday_max_soc: f32,
+    pub min_solar_forecast_kwh: f32,
+}
+
+impl Default for SolarAwareChargingConfigCore {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            solar_window_start_hour: 10,
+            solar_window_end_hour: 14,
+            midday_max_soc: 90.0,
+            min_solar_forecast_kwh: 2.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StrategyEnabledConfigCore {
+    pub enabled: bool,
+}
+
+impl Default for StrategyEnabledConfigCore {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
 }
 
 /// Currency display option

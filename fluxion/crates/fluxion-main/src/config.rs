@@ -72,6 +72,10 @@ pub struct PricingConfig {
     /// HA entity ID for spot price data
     pub spot_price_entity: String,
 
+    /// Optional separate sensor for tomorrow's prices
+    #[serde(default)]
+    pub tomorrow_price_entity: Option<String>,
+
     /// Use spot prices for buying decisions
     pub use_spot_prices_to_buy: bool,
 
@@ -222,6 +226,18 @@ pub struct StrategiesConfig {
     #[serde(default)]
     pub solar_aware_charging: SolarAwareChargingConfig,
     #[serde(default)]
+    pub morning_precharge: StrategyEnabledConfig,
+    #[serde(default)]
+    pub day_ahead_planning: StrategyEnabledConfig,
+    #[serde(default)]
+    pub time_aware_charge: StrategyEnabledConfig,
+    #[serde(default)]
+    pub price_arbitrage: StrategyEnabledConfig,
+    #[serde(default)]
+    pub solar_first: StrategyEnabledConfig,
+    #[serde(default)]
+    pub self_use: StrategyEnabledConfig,
+    #[serde(default)]
     pub seasonal: SeasonalConfig,
 }
 
@@ -271,6 +287,17 @@ impl Default for SolarAwareChargingConfig {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StrategyEnabledConfig {
+    pub enabled: bool,
+}
+
+impl Default for StrategyEnabledConfig {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct SeasonalConfig {
     pub force_season: Option<String>,
@@ -290,6 +317,7 @@ impl Default for AppConfig {
             }],
             pricing: PricingConfig {
                 spot_price_entity: "sensor.current_spot_electricity_price".to_string(),
+                tomorrow_price_entity: None,
                 use_spot_prices_to_buy: true,
                 use_spot_prices_to_sell: true,
                 fixed_buy_prices: vec![0.05; 24], // 24 hourly values
@@ -590,6 +618,12 @@ impl From<&AppConfig> for fluxion_core::SeasonalStrategiesConfig {
                 .strategies
                 .solar_aware_charging
                 .min_solar_forecast_kwh,
+            morning_precharge_enabled: app_config.strategies.morning_precharge.enabled,
+            day_ahead_planning_enabled: app_config.strategies.day_ahead_planning.enabled,
+            time_aware_charge_enabled: app_config.strategies.time_aware_charge.enabled,
+            price_arbitrage_enabled: app_config.strategies.price_arbitrage.enabled,
+            solar_first_enabled: app_config.strategies.solar_first.enabled,
+            self_use_enabled: app_config.strategies.self_use.enabled,
         }
     }
 }
@@ -632,6 +666,7 @@ impl From<AppConfig> for fluxion_core::SystemConfig {
                 .collect(),
             pricing_config: fluxion_core::PricingConfig {
                 spot_price_entity: app_config.pricing.spot_price_entity,
+                tomorrow_price_entity: app_config.pricing.tomorrow_price_entity,
                 use_spot_prices_to_buy: app_config.pricing.use_spot_prices_to_buy,
                 use_spot_prices_to_sell: app_config.pricing.use_spot_prices_to_sell,
                 fixed_buy_price_czk: app_config
@@ -670,6 +705,26 @@ impl From<AppConfig> for fluxion_core::SystemConfig {
                 display_currency,
                 language: app_config.system.language,
                 timezone: app_config.system.timezone,
+            },
+            strategies_config: fluxion_core::strategy::SeasonalStrategiesConfig {
+                winter_peak_discharge_enabled: app_config.strategies.winter_peak_discharge.enabled,
+                winter_peak_min_spread_czk: app_config.strategies.winter_peak_discharge.min_spread_czk,
+                winter_peak_min_soc_to_start: app_config.strategies.winter_peak_discharge.min_soc_to_start,
+                winter_peak_min_soc_target: app_config.strategies.winter_peak_discharge.min_soc_target,
+                winter_peak_min_hours_to_solar: app_config.strategies.winter_peak_discharge.min_hours_to_solar,
+                winter_peak_solar_window_start: app_config.strategies.winter_peak_discharge.solar_window_start_hour,
+                winter_peak_solar_window_end: app_config.strategies.winter_peak_discharge.solar_window_end_hour,
+                solar_aware_charging_enabled: app_config.strategies.solar_aware_charging.enabled,
+                solar_aware_solar_window_start: app_config.strategies.solar_aware_charging.solar_window_start_hour,
+                solar_aware_solar_window_end: app_config.strategies.solar_aware_charging.solar_window_end_hour,
+                solar_aware_midday_max_soc: app_config.strategies.solar_aware_charging.midday_max_soc,
+                solar_aware_min_solar_forecast_kwh: app_config.strategies.solar_aware_charging.min_solar_forecast_kwh,
+                morning_precharge_enabled: app_config.strategies.morning_precharge.enabled,
+                day_ahead_planning_enabled: app_config.strategies.day_ahead_planning.enabled,
+                time_aware_charge_enabled: app_config.strategies.time_aware_charge.enabled,
+                price_arbitrage_enabled: app_config.strategies.price_arbitrage.enabled,
+                solar_first_enabled: app_config.strategies.solar_first.enabled,
+                self_use_enabled: app_config.strategies.self_use.enabled,
             },
         }
     }

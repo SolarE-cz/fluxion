@@ -122,10 +122,24 @@ fn initialize_and_run() -> Result<()> {
         Arc::new(HomeAssistantInverterAdapter::new(ha_client.clone(), mapper));
     info!("🔌 Inverter data source: {}", inverter_source.name());
 
-    let price_source: Arc<dyn fluxion_core::PriceDataSource> = Arc::new(CzSpotPriceAdapter::new(
-        ha_client,
-        config.pricing.spot_price_entity.clone(),
-    ));
+    let price_source: Arc<dyn fluxion_core::PriceDataSource> = if let Some(tomorrow_entity) =
+        &config.pricing.tomorrow_price_entity
+    {
+        info!(
+            "💰 Using separate tomorrow sensor: {}",
+            tomorrow_entity
+        );
+        Arc::new(CzSpotPriceAdapter::with_tomorrow_sensor(
+            ha_client,
+            config.pricing.spot_price_entity.clone(),
+            tomorrow_entity.clone(),
+        ))
+    } else {
+        Arc::new(CzSpotPriceAdapter::new(
+            ha_client,
+            config.pricing.spot_price_entity.clone(),
+        ))
+    };
     info!("💰 Price data source: {}", price_source.name());
 
     // Convert AppConfig to SystemConfig for ECS

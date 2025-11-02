@@ -50,6 +50,25 @@ pub struct AppState {
     pub i18n: Arc<I18n>,
 }
 
+/// Extract ingress path from request headers
+/// Returns the ingress path prefix (e.g., "/hassio/ingress/641a79a3_fluxion")
+/// or empty string if not running under ingress
+fn extract_ingress_path(headers: &axum::http::HeaderMap) -> String {
+    let path = headers
+        .get("X-Ingress-Path")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_owned())
+        .unwrap_or_default();
+    
+    if path.is_empty() {
+        trace!("No X-Ingress-Path header found, running in standalone mode");
+    } else {
+        info!("Running under HA Ingress with path: {}", path);
+    }
+    
+    path
+}
+
 /// Start the web server with message passing to ECS
 ///
 /// # Arguments
@@ -95,12 +114,20 @@ pub async fn start_web_server(
 }
 
 /// Main dashboard page handler
-async fn index_handler(State(app_state): State<AppState>) -> impl IntoResponse {
+async fn index_handler(
+    State(app_state): State<AppState>,
+    headers: axum::http::HeaderMap,
+) -> impl IntoResponse {
     debug!("Dashboard page requested");
+    let ingress_path = extract_ingress_path(&headers);
 
     match app_state.query_sender.query_dashboard().await {
         Ok(response) => {
-            let template = DashboardTemplate::from_query_response(response, app_state.i18n.clone());
+            let template = DashboardTemplate::from_query_response(
+                response,
+                app_state.i18n.clone(),
+                ingress_path,
+            );
             // Askama 0.14: use .render() and convert to axum Html response
             match template.render() {
                 Ok(html) => Html(html).into_response(),
@@ -136,8 +163,13 @@ async fn stream_handler(
         async move {
             match app_state.query_sender.query_dashboard().await {
                 Ok(response) => {
-                    let dashboard =
-                        DashboardTemplate::from_query_response(response, app_state.i18n.clone());
+                    // SSE doesn't have access to headers, use empty ingress path
+                    // (live data template doesn't use URLs anyway)
+                    let dashboard = DashboardTemplate::from_query_response(
+                        response,
+                        app_state.i18n.clone(),
+                        String::new(),
+                    );
 
                     // Create live data template from dashboard (without chart)
                     let live_template = LiveDataTemplate {
@@ -184,8 +216,11 @@ struct ChartDataJson {
 async fn chart_data_handler(State(app_state): State<AppState>) -> impl IntoResponse {
     match app_state.query_sender.query_dashboard().await {
         Ok(response) => {
-            let template =
-                DashboardTemplate::from_query_response(response.clone(), app_state.i18n.clone());
+            let template = DashboardTemplate::from_query_response(
+                response.clone(),
+                app_state.i18n.clone(),
+                String::new(), // JSON endpoint doesn't need ingress path
+            );
 
             // Extract battery SOC from first inverter
             let current_battery_soc = response.inverters.first().map(|inv| inv.battery_soc);

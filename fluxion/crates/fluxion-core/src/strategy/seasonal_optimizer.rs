@@ -32,6 +32,7 @@ use crate::strategy::{
 };
 
 /// Strategies configuration for optimizer construction
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SeasonalStrategiesConfig {
     pub winter_peak_discharge_enabled: bool,
     pub winter_peak_min_spread_czk: f32,
@@ -45,6 +46,12 @@ pub struct SeasonalStrategiesConfig {
     pub solar_aware_solar_window_end: u32,
     pub solar_aware_midday_max_soc: f32,
     pub solar_aware_min_solar_forecast_kwh: f32,
+    pub morning_precharge_enabled: bool,
+    pub day_ahead_planning_enabled: bool,
+    pub time_aware_charge_enabled: bool,
+    pub price_arbitrage_enabled: bool,
+    pub solar_first_enabled: bool,
+    pub self_use_enabled: bool,
 }
 
 impl Default for SeasonalStrategiesConfig {
@@ -62,9 +69,41 @@ impl Default for SeasonalStrategiesConfig {
             solar_aware_solar_window_end: 14,
             solar_aware_midday_max_soc: 90.0,
             solar_aware_min_solar_forecast_kwh: 2.0,
+            morning_precharge_enabled: true,
+            day_ahead_planning_enabled: true,
+            time_aware_charge_enabled: true,
+            price_arbitrage_enabled: true,
+            solar_first_enabled: true,
+            self_use_enabled: true,
         }
     }
 }
+
+impl From<&crate::resources::StrategiesConfigCore> for SeasonalStrategiesConfig {
+    fn from(config: &crate::resources::StrategiesConfigCore) -> Self {
+        Self {
+            winter_peak_discharge_enabled: config.winter_peak_discharge.enabled,
+            winter_peak_min_spread_czk: config.winter_peak_discharge.min_spread_czk,
+            winter_peak_min_soc_to_start: config.winter_peak_discharge.min_soc_to_start,
+            winter_peak_min_soc_target: config.winter_peak_discharge.min_soc_target,
+            winter_peak_min_hours_to_solar: config.winter_peak_discharge.min_hours_to_solar,
+            winter_peak_solar_window_start: config.winter_peak_discharge.solar_window_start_hour,
+            winter_peak_solar_window_end: config.winter_peak_discharge.solar_window_end_hour,
+            solar_aware_charging_enabled: config.solar_aware_charging.enabled,
+            solar_aware_solar_window_start: config.solar_aware_charging.solar_window_start_hour,
+            solar_aware_solar_window_end: config.solar_aware_charging.solar_window_end_hour,
+            solar_aware_midday_max_soc: config.solar_aware_charging.midday_max_soc,
+            solar_aware_min_solar_forecast_kwh: config.solar_aware_charging.min_solar_forecast_kwh,
+            morning_precharge_enabled: config.morning_precharge.enabled,
+            day_ahead_planning_enabled: config.day_ahead_planning.enabled,
+            time_aware_charge_enabled: config.time_aware_charge.enabled,
+            price_arbitrage_enabled: config.price_arbitrage.enabled,
+            solar_first_enabled: config.solar_first.enabled,
+            self_use_enabled: config.self_use.enabled,
+        }
+    }
+}
+
 
 pub struct AdaptiveSeasonalOptimizer {
     winter_strategies: Vec<Box<dyn EconomicStrategy>>, // order matters
@@ -107,32 +146,44 @@ impl AdaptiveSeasonalOptimizer {
             config.winter_peak_solar_window_end,
         ));
 
-        let winter_strategies: Vec<Box<dyn EconomicStrategy>> = vec![
-            // DISABLED: SolarAwareChargingStrategy
-            // This was overriding TimeAwareChargeStrategy with more lenient price thresholds (30% above min)
-            // causing charging before reaching the actual cheapest blocks.
-            // TimeAwareChargeStrategy now handles all charging with "upcoming cheapest blocks" logic.
-            // Box::new(SolarAwareChargingStrategy::new(
-            //     config.solar_aware_charging_enabled,
-            //     config.solar_aware_solar_window_start,
-            //     config.solar_aware_solar_window_end,
-            //     config.solar_aware_midday_max_soc,
-            //     config.solar_aware_min_solar_forecast_kwh,
-            // )),
-            Box::new(winter_discharge.as_ref().clone()),
-            Box::new(MorningPreChargeStrategy::default()),
-            Box::new(DayAheadChargePlanningStrategy::default()),
-            Box::new(TimeAwareChargeStrategy::default()),
-            Box::new(SelfUseStrategy::default()),
-        ];
+        let mut winter_strategies: Vec<Box<dyn EconomicStrategy>> = Vec::new();
+        // DISABLED: SolarAwareChargingStrategy
+        // This was overriding TimeAwareChargeStrategy with more lenient price thresholds (30% above min)
+        // causing charging before reaching the actual cheapest blocks.
+        // TimeAwareChargeStrategy now handles all charging with "upcoming cheapest blocks" logic.
+        
+        if config.winter_peak_discharge_enabled {
+            winter_strategies.push(Box::new(winter_discharge.as_ref().clone()));
+        }
+        if config.morning_precharge_enabled {
+            winter_strategies.push(Box::new(MorningPreChargeStrategy::default()));
+        }
+        if config.day_ahead_planning_enabled {
+            winter_strategies.push(Box::new(DayAheadChargePlanningStrategy::default()));
+        }
+        if config.time_aware_charge_enabled {
+            winter_strategies.push(Box::new(TimeAwareChargeStrategy::default()));
+        }
+        if config.self_use_enabled {
+            winter_strategies.push(Box::new(SelfUseStrategy::default()));
+        }
 
-        let summer_strategies: Vec<Box<dyn EconomicStrategy>> = vec![
-            Box::new(MorningPreChargeStrategy::default()),
-            Box::new(TimeAwareChargeStrategy::default()),
-            Box::new(PriceArbitrageStrategy::default()),
-            Box::new(SolarFirstStrategy::default()),
-            Box::new(SelfUseStrategy::default()),
-        ];
+        let mut summer_strategies: Vec<Box<dyn EconomicStrategy>> = Vec::new();
+        if config.morning_precharge_enabled {
+            summer_strategies.push(Box::new(MorningPreChargeStrategy::default()));
+        }
+        if config.time_aware_charge_enabled {
+            summer_strategies.push(Box::new(TimeAwareChargeStrategy::default()));
+        }
+        if config.price_arbitrage_enabled {
+            summer_strategies.push(Box::new(PriceArbitrageStrategy::default()));
+        }
+        if config.solar_first_enabled {
+            summer_strategies.push(Box::new(SolarFirstStrategy::default()));
+        }
+        if config.self_use_enabled {
+            summer_strategies.push(Box::new(SelfUseStrategy::default()));
+        }
 
         Self {
             winter_strategies,
