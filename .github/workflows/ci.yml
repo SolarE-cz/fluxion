@@ -193,7 +193,7 @@ jobs:
 
   build-aarch64:
     name: Build ARM64 Image
-    runs-on: [ubuntu-latest]
+    runs-on: [ubuntu-latest-arm]
     # Build on main, tags, and PRs
     needs: [fmt, clippy, test]
     permissions:
