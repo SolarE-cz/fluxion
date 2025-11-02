@@ -6,8 +6,6 @@
 # Main FluxION ECS execution script
 # ==============================================================================
 
-bashio::log.trace "${FUNCNAME[0]}"
-
 # Parse configuration
 CONFIG_PATH=/data/options.json
 
