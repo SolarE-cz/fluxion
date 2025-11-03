@@ -1,6 +1,6 @@
 # Home Assistant Add-on Configuration
 name: FluxION ECS
-version: "0.1.7"
+version: "0.1.8"
 slug: fluxion
 description: "Solar plant automation based on electricity spot prices"
 url: "https://github.com/SolarE-cz/fluxion"
@@ -22,25 +22,26 @@ panel_icon: mdi:solar-power
 
 # Addon options schema
 options:
-  debug_mode: true
-  log_level: "info"
   inverters:
     - id: "solax"
       vendor: "solax"
       entity_prefix: "solax"
       topology: "independent"
-      min_battery_soc: 10
-      max_battery_soc: 100
   pricing:
     spot_price_entity: "sensor.current_spot_electricity_price_15min"
     use_spot_prices_to_buy: true
     use_spot_prices_to_sell: true
-    force_charge_hours: 4
-    force_discharge_hours: 2
     fixed_buy_prices: []
     fixed_sell_prices: []
   control:
     maximum_export_power_w: 10000
+    force_charge_hours: 4
+    force_discharge_hours: 2
+    min_battery_soc: 10
+    max_battery_soc: 100
+  system:
+    debug_mode: true
+    log_level: "info"
     update_interval_secs: 60
   strategies:
     winter_peak_discharge:
@@ -71,8 +72,6 @@ options:
       enabled: true
 
 schema:
-  debug_mode: bool
-  log_level: list(trace|debug|info|warning|error)?
   inverters:
     - id: str
       vendor: list(solax|fronius|sma)?
@@ -81,20 +80,23 @@ schema:
       master_id: str?
       slave_ids:
         - str?
-      min_battery_soc: float(0,100)?
-      max_battery_soc: float(0,100)?
   pricing:
     spot_price_entity: str?
     use_spot_prices_to_buy: bool?
     use_spot_prices_to_sell: bool?
-    force_charge_hours: int(0,24)?
-    force_discharge_hours: int(0,24)?
     fixed_buy_prices:
       - float?
     fixed_sell_prices:
       - float?
   control:
     maximum_export_power_w: int(0,)?
+    force_charge_hours: int(0,24)?
+    force_discharge_hours: int(0,24)?
+    min_battery_soc: float(0,100)?
+    max_battery_soc: float(0,100)?
+  system:
+    debug_mode: bool?
+    log_level: list(trace|debug|info|warning|error)?
     update_interval_secs: int(10,3600)?
   strategies:
     winter_peak_discharge:
