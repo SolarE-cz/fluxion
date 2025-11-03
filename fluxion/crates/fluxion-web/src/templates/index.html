@@ -752,7 +752,7 @@
     
     <!-- Upcoming Schedule (Outside SSE update area - updates every 15 minutes) -->
     {% if let Some(prices) = prices %}
-    <div class="card info" id="upcoming-schedule-container">
+    <div class="card info" id="upcoming-schedule-container" style="display: none;">
         <h2><i class="mdi mdi-calendar-clock"></i> Upcoming Schedule</h2>
         <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
@@ -814,6 +814,12 @@
     
     function populateUpcomingBlocks(tbody, chartData) {
         if (!tbody || !chartData) return;
+        
+        // Show the container once we have data to display
+        const container = document.getElementById('upcoming-schedule-container');
+        if (container) {
+            container.style.display = 'block';
+        }
         
         // Clear existing rows
         tbody.innerHTML = '';

@@ -1,6 +1,6 @@
 # Home Assistant Add-on Configuration
 name: FluxION ECS
-version: "0.1.8"
+version: "0.1.9"
 slug: fluxion
 description: "Solar plant automation based on electricity spot prices"
 url: "https://github.com/SolarE-cz/fluxion"
@@ -74,7 +74,7 @@ options:
 schema:
   inverters:
     - id: str
-      vendor: list(solax|fronius|sma)?
+      vendor: list(solax)?
       entity_prefix: str
       topology: list(independent|master|slave)?
       master_id: str?
