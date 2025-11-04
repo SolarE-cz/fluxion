@@ -1,0 +1,40 @@
+[package]
+name = "fluxion-strategy-bench"
+version = "0.1.0"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+authors = ["SOLARE S.R.O. <info@solare.cz>"]
+description = "Comprehensive strategy testing and benchmarking suite for FluxION"
+
+[dependencies]
+# Core dependencies from workspace
+fluxion-core = { path = "../fluxion-core" }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+
+# HTTP client for data fetching
+reqwest = { workspace = true, features = ["json", "blocking"] }
+
+# Excel file parsing
+calamine = "0.26"
+
+# CSV parsing
+csv = "1.3"
+
+# Temporary file management
+tempfile = "3.14"
+
+# Statistical analysis
+statrs = "0.17"
+
+# CLI progress bars
+indicatif = "0.17"
+
+# Pretty tables
+comfy-table = "7.1"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full"] }

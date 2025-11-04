@@ -6,6 +6,7 @@ members = [
   "crates/fluxion-integration-tests",
   "crates/fluxion-main",
   "crates/fluxion-solax",
+  "crates/fluxion-strategy-bench",
   "crates/fluxion-web",
 ]
 resolver = "2"
@@ -123,3 +124,9 @@ unic-langid = "0.9.6"
 intl-memoizer = "0.5.3"
 # Testing dependencies
 mockito = "1.7.0"
+# Strategy benchmarking dependencies
+calamine = "0.26"
+tempfile = "3.14"
+statrs = "0.17"
+indicatif = "0.17"
+comfy-table = "7.1"
